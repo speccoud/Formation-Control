@@ -18,7 +18,9 @@ rho_ij      = 0;
 
 % Initialize agents' position
 swarm = [-5,  14;   -5,  -19;   0,  0;   20, 20;
-         35,  -4;   68,    0;  72,  13;  72,-18];    
+         35,  -4;   68,    0;  72,  13;  72,-18];
+
+communication_qualities = zeros(swarm_size, swarm_size);
 
 
 % Initialize the velocity
@@ -65,7 +67,11 @@ for k=1:max_times
             else
                 rho_ij=0;
             end
+
+            
+
             phi_rij=gij*aij;
+            communication_qualities(i,j) = phi_rij;
             qi=[swarm(i,1),swarm(i,2)];
             qj=[swarm(j,1),swarm(j,2)];
             nd=(qi-qj)/sqrt(1+norm(qi-qj));
@@ -105,25 +111,41 @@ for k=1:max_times
     figure(3);
     dt = delaunayTriangulation(swarm(:, 1), swarm(:, 2));           % Compute the Delaunay triangulation
     edgeIndex = edges(dt);                                         % Triangulation edge indices
-    triplot(dt,'-o');                                               % Plot the Delaunay triangulation
-    % hold on
+    % triplot(dt,'-o');                                               % Plot the Delaunay triangulation
+    
     % triplot(dt,'o');                                               % Plot the Delaunay triangulation
     
     % Plot agents' directional vector arrows.
     % vecarrow_x=swarm(:, 1)./sqrt(swarm(:, 1).^2+swarm(:, 2).^2);    % Plot Arrows
     % vecarrow_y=swarm(:, 2)./sqrt(swarm(:, 1).^2+swarm(:, 2).^2);
     % quiver(swarm(:, 1), swarm(:, 2), vecarrow_x, vecarrow_y, 0.3, 'r');
+    clf;
+    triplot(dt,'o');
+    for i = 1:swarm_size
+        
+        for j= 1:swarm_size
+            if i ~= j
+            hold on;
+            a1 = swarm(i,:);
+            a2 = swarm(j,:);
+            plot([a1(1), a2(1)], [a1(2), a2(2)], 'k-');
+
+            midpoint_x = (a1(1) + a2(1)) / 2;
+            midpoint_y = (a1(2) + a2(2)) / 2;
+            
+            % Add the number label at the midpoint of the line
+            label = communication_qualities(i, j);
+            text(midpoint_x, midpoint_y, num2str(label), 'HorizontalAlignment', 'center');
+            hold off;
+            end
+            
+
+        end
+    end
 
     
-
-    % hold off
     
-    % vertices = dt.Points;
-    % for i = 1:size(edgeIndex, 1)
-    %     v1 = vertices(edgeIndex(i, 1), :);
-    %     v2 = vertices(edgeIndex(i, 2), :);
-    %     plot([v1(1), v2(1)], [v1(2), v2(2)], 'k-');
-    % end
+    
     
 
     axis equal;
