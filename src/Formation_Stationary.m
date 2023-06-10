@@ -19,42 +19,27 @@ communication_qualities = zeros(swarm_size, swarm_size);
 
 
 %% ---Initialize Agents' Positions---
-swarm = [-5,  14;  
-         -5, -19;   
-          0,   0;   
-         20,  20;
-         35,  -4;   
-         68,   0;  
-         72,  13;];
+% swarm = [-5,  14;
+%          -5, -19;
+%          0,   0;
+%          20,  20;
+%          35,  -4;
+%          68,   0;
+%          72,  13;];
 
-% % Create a new_agent matrix
-% new_agent = [50, 50];
-% 
-% % Append new_agent to the swarm
-% swarm = [swarm; new_agent];
+% Define the range of coordinates
+x_min = 0;
+x_max = 50;
+y_min = 0;
+y_max = 50;
 
-% % Define the range of coordinates
-% x_min = 0;
-% x_max = 50;
-% y_min = 0;
-% y_max = 50;
-% 
-% % Generate random positions for the swarm
-% x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
-% y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
-% 
-% % Combine the x and y coordinates into a single matrix
-% swarm = [x_coords, y_coords];
-% 
-% % Define new_agent coordinates
-% new_x = 50;
-% new_y = 50;
-% 
-% % Create a new_agent matrix
-% new_agent = [new_x, new_y];
-% 
-% % Append new_agent to the swarm
-% swarm = [swarm; new_agent];
+% Generate random positions for the swarm
+x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
+y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
+
+% Combine the x and y coordinates into a single matrix
+swarm = [x_coords, y_coords];
+
 
 % Print agents' initial positions
 % for i = 1:swarm_size
@@ -116,16 +101,20 @@ node_colors = rand(swarm_size, 3);
 
 %% ---Simulation---
 for k=1:max_iter
-    % Plot the node trace
-    for i = 1:(swarm_size)
-        swarm_trace(k, i, :) = swarm(i, :);
-    end
 
     % Plot the node trace inside the loop
     figure(4)
     set(gcf, 'Position', figure_positions(4, :));
     hold on;
+
+    % Plot all nodes as markers
+    scatter(swarm(:, 1), swarm(:, 2), [], node_colors, 'filled');
+
+    %--- Formation Scene + Node Trace---
     for i = 1:swarm_size
+        % Plot the node trace
+        swarm_trace(k, i, :) = swarm(i, :);
+
         trace_x = squeeze(swarm_trace(:, i, 1));
         trace_y = squeeze(swarm_trace(:, i, 2));
         plot(trace_x, trace_y, 'Color', node_colors(i, :));
@@ -136,21 +125,16 @@ for k=1:max_iter
         arrow_dx = diff(trace_x);
         arrow_dy = diff(trace_y);
 
-    % Normalize the arrow displacements
-    arrow_magnitudes = sqrt(arrow_dx.^2 + arrow_dy.^2);
-    max_arrow_magnitude = max(arrow_magnitudes);
-    scaling_factor = 2;  % Adjust the scaling factor for arrow size
-    normalized_arrow_dx = arrow_dx * scaling_factor / max_arrow_magnitude;
-    normalized_arrow_dy = arrow_dy * scaling_factor / max_arrow_magnitude;
+        % Normalize the arrow displacements
+        arrow_magnitudes = sqrt(arrow_dx.^2 + arrow_dy.^2);
+        max_arrow_magnitude = max(arrow_magnitudes);
+        scaling_factor = 2;  % Adjust the scaling factor for arrow size
+        normalized_arrow_dx = arrow_dx * scaling_factor / max_arrow_magnitude;
+        normalized_arrow_dy = arrow_dy * scaling_factor / max_arrow_magnitude;
 
-    quiver(arrow_x, arrow_y, normalized_arrow_dx, normalized_arrow_dy, 0, 'Color', node_colors(i, :), 'LineWidth', 1.5, 'MaxHeadSize', 2);
+        quiver(arrow_x, arrow_y, normalized_arrow_dx, normalized_arrow_dy, 0, 'Color', node_colors(i, :), 'LineWidth', 1.5, 'MaxHeadSize', 2);
     end
-    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-    title('Node Trace');
-    hold off;
 
-    %---Plot Swarms---%
     figure(3);
     dt = delaunayTriangulation(swarm(:, 1), swarm(:, 2));           % Compute the Delaunay triangulation
     edgeIndex = edges(dt);                                          % Triangulation edge indices
@@ -163,10 +147,9 @@ for k=1:max_iter
     axis equal;
     hold on;
 
+    %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
         for j= 1:swarm_size
-            % Store current positions in swarm_trace matrix
-            swarm_trace(k, i, :) = swarm(i, :);
             if i ~= j && communication_qualities(i, j) > 0
 
                 hold on;
@@ -205,6 +188,7 @@ for k=1:max_iter
 
     axis equal;
 
+    %--- Controller ---
     for i=1:swarm_size
         rho_ij=0;
         for j=[1:(i-1),(i+1):swarm_size]
@@ -223,7 +207,7 @@ for k=1:max_iter
             qj=[swarm(j,1),swarm(j,2)];
             nd=(qi-qj)/sqrt(1+norm(qi-qj)*sim_speed);
 
-            % Make the one agent fixed 
+            % Make the one agent fixed
             if i == 7
                 speed(i,1)=0;
                 speed(i,2)=0;
@@ -269,5 +253,9 @@ for i = 1:swarm_size
     trace_y = squeeze(swarm_trace(:, i, 2));
     plot(trace_x, trace_y);
 end
+xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+title('Node Trace');
+hold off;
 axis([x_min x_max y_min y_max]);
 hold off;
