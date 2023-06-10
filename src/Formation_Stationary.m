@@ -14,7 +14,7 @@ v           = 3;                       % path loss exponent
 r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
-sim_speed   = 1;
+sim_speed   = 0.7;
 communication_qualities = zeros(swarm_size, swarm_size);
 
 
@@ -97,7 +97,18 @@ tic
 % Assign a different color to each edge-label pair
 line_colors = rand(swarm_size, swarm_size, 3);
 label_colors = line_colors;
-node_colors = rand(swarm_size, 3);
+
+% Define the color matrix with predefined colors
+node_colors = [
+    108 155 207;  % Light Blue
+    247 147 39;   % Orange
+    242 102 171;  % Light Pink
+    255 217 90;   % Light Gold
+    122 168 116;  % Green
+    147 132 209;  % Purple
+    245 80 80     % Red
+   ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
+
 
 %% ---Simulation---
 for k=1:max_iter
@@ -157,6 +168,9 @@ for k=1:max_iter
                 % Get the line color and label color for the current pair
                 line_color = line_colors(i, j, :);
                 label_color = label_colors(i, j, :);
+
+                % line_color = node_colors(i, :);
+                % label_color = line_color;
 
                 a1 = swarm(i,:);
                 a2 = swarm(j,:);
