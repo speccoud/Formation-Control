@@ -19,31 +19,31 @@ communication_qualities = zeros(swarm_size, swarm_size);
 
 
 %% ---Initialize Agents' Positions---
-swarm = [-5,  14;   -5,  -19;   0,  0;   20, 20;
-         35,  -4;   68,    0;  72,  13;  72,-18;];
+% swarm = [-5,  14;   -5,  -19;   0,  0;   20, 20;
+%          35,  -4;   68,    0;  72,  13;];
 
-% % Define the range of coordinates
-% x_min = 0;
-% x_max = 50;
-% y_min = 0;
-% y_max = 50;
-% 
-% % Generate random positions for the swarm
-% x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
-% y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
-% 
-% % Combine the x and y coordinates into a single matrix
-% swarm = [x_coords, y_coords];
-% 
-% % Define new_agent coordinates
-% new_x = 50;
-% new_y = 50;
-% 
-% % Create a new_agent matrix
-% new_agent = [new_x, new_y];
-% 
-% % Append new_agent to the swarm
-% swarm = [swarm; new_agent];
+% Define the range of coordinates
+x_min = 0;
+x_max = 50;
+y_min = 0;
+y_max = 50;
+
+% Generate random positions for the swarm
+x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
+y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
+
+% Combine the x and y coordinates into a single matrix
+swarm = [x_coords, y_coords];
+
+% Define new_agent coordinates
+new_x = 50;
+new_y = 50;
+
+% Create a new_agent matrix
+new_agent = [new_x, new_y];
+
+% Append new_agent to the swarm
+swarm = [swarm; new_agent];
 
 % Print agents' initial positions
 % for i = 1:swarm_size
@@ -65,22 +65,31 @@ t_Elapsed = 0;
 Jn        = 0;
 rn        = 0;
 
+% Define the figure positions
+figure_positions = [
+    %Left Bottom Right Width Height
+    200, 480, 500, 400;   % Position for Figure 1
+    750, 480, 500, 400    % Position for Figure 2
+    200, 10, 500, 400;    % Position for Figure 3
+    750, 10, 500, 400;    % Position for Figure 4
+    ];
+
 figure(1)
 Jn_Plot = plot(t_Elapsed, Jn);                  % Plot Jn
-pos1 = get(gcf,'Position');                     % get position of Figure(1)
-set(gcf,'Position', pos1 - [pos1(3)/2,0,0,0])   % Shift position of Figure(1)
+set(gcf, 'Position', figure_positions(1, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$J_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+title('Average Communication Performance Indicator');
 axis ([0 100 0.97, 0.98]);
 hold on
 Jn_Text = text(t_Elapsed(end), Jn(end), sprintf('Jn: %.4f', Jn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
 
 figure(2)
 rn_Plot = plot(t_Elapsed, rn);                  % Plot rn
-pos2 = get(gcf,'Position');                     % get position of Figure(2)
-set(gcf,'Position', pos2 + [pos1(3)/2,0,0,0])   % Shift position of Figure(2)
+set(gcf, 'Position', figure_positions(2, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$r_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+title('Average Distance Indicator');
 axis equal;
 hold on
 rn_Text = text(t_Elapsed(end), rn(end), sprintf('rn: %.4f', rn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
@@ -89,22 +98,31 @@ drawnow                                         % Force a graphics refresh so th
 
 tic
 
+%% ---Simulation---
 for k=1:max_iter
-        % Plot the node trace
-    for i = 1:(swarm_size + 1)
+    % Plot the node trace
+    for i = 1:(swarm_size)
         swarm_trace(k, i, :) = swarm(i, :);
     end
-    
+
     % Plot the node trace inside the loop
     figure(4)
+    set(gcf, 'Position', figure_positions(4, :));
     hold on;
     for i = 1:swarm_size
         trace_x = squeeze(swarm_trace(:, i, 1));
         trace_y = squeeze(swarm_trace(:, i, 2));
         plot(trace_x, trace_y);
+
+        % Add arrows to indicate node movement
+        arrow_x = trace_x(1:end-1);
+        arrow_y = trace_y(1:end-1);
+        arrow_dx = diff(trace_x);
+        arrow_dy = diff(trace_y);
+        quiver(arrow_x, arrow_y, arrow_dx, arrow_dy, 0, 'LineWidth', 1, 'MaxHeadSize', 10);
     end
-    xlabel('X coordinate');
-    ylabel('Y coordinate');
+    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Node Trace');
     hold off;
 
@@ -113,11 +131,15 @@ for k=1:max_iter
     dt = delaunayTriangulation(swarm(:, 1), swarm(:, 2));           % Compute the Delaunay triangulation
     edgeIndex = edges(dt);                                          % Triangulation edge indices
     triplot(dt,'o--');
+    set(gcf, 'Position', figure_positions(3, :));
+    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    title('Formation Scene');
+    axis equal;
+    hold on;
 
-
-    
-    for i = 1:swarm_size 
-        for j= 1:swarm_size 
+    for i = 1:swarm_size
+        for j= 1:swarm_size
             % Store current positions in swarm_trace matrix
             swarm_trace(k, i, :) = swarm(i, :);
             if i ~= j && communication_qualities(i, j) > 0
@@ -125,11 +147,12 @@ for k=1:max_iter
                 hold on;
 
                 % Assign a different color to each line-label pair
-                color = rand(1, 3);  % Generate a random RGB color
+                line_color = rand(1, 3);  % Generate a random RGB color
 
                 a1 = swarm(i,:);
                 a2 = swarm(j,:);
-                plot([a1(1), a2(1)], [a1(2), a2(2)], '--');
+                plot([a1(1), a2(1)], [a1(2), a2(2)], '--', 'Color', line_color);
+
 
                 % Calculate the position for the label
                 scaling_factor = 0.2;  % Adjust the scaling factor for the label positioning
@@ -144,7 +167,7 @@ for k=1:max_iter
                 label = communication_qualities(i, j);
                 label_str = sprintf('%.4f', label);
 
-                text(label_x, label_y, label_str, 'HorizontalAlignment', 'center');
+                text(label_x, label_y, label_str, 'HorizontalAlignment', 'center', 'Color', line_color);
                 hold off;
 
                 % Remove quality value for refresh
@@ -220,8 +243,5 @@ for i = 1:swarm_size
     trace_y = squeeze(swarm_trace(:, i, 2));
     plot(trace_x, trace_y);
 end
-xlabel('X coordinate');
-ylabel('Y coordinate');
-title('Node Trace');
 axis([x_min x_max y_min y_max]);
 hold off;
