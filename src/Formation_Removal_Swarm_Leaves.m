@@ -6,7 +6,7 @@ clc;
 % Initialize all parameters
 max_iter   = 500;
 h           = 1;
-swarm_size  = 8;
+swarm_size  = 7;
 swarm_ctrl_size = swarm_size;
 alpha       = 10^(-5);                 % system parameter about antenna characteristics
 delta       = 2;                       % required application data rate
@@ -26,8 +26,7 @@ swarm = [-5,  14;
          20,  20;
          35,  -4;
          68,   0;
-         60,  20;
-         100, 13];
+         60,  20];
 
 % Define the range of coordinates
 x_min = 0;
@@ -110,11 +109,11 @@ node_colors = [
     122 168 116;  % Green
     147 132 209;  % Purple
     245 80 80;    % Red
-    164 144 124;  % Brown
+    % 164 144 124;  % Brown
    ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
 % node_colors = rand(swarm_size, 3); % Randomize node colors
-
+ctrl_flag = false;
 
 %% ---Simulation---
 for k=1:max_iter
@@ -229,14 +228,21 @@ for k=1:max_iter
 
             % Update velocities of agents
             % Make the one agent fixed
-            if i == 8 %&& all(communication_qualities(8, :) <= PT)
-                speed(i,1)=speed(i,1)+rho_ij*nd(1) - 1;
+            if i == 7 && any(ctrl_flag)
+                speed(i,1)=0;
+                speed(i,2)=0;
+            elseif i ~= 7 && any(ctrl_flag)
+                speed(i,1)=speed(i,1)+rho_ij*nd(1) + 0.5; % Add constant to get a group X movement
                 speed(i,2)=speed(i,2)+rho_ij*nd(2);
             else
-                speed(i,1)=speed(i,1)+rho_ij*nd(1) + 1; % Add constant to get a group X movement
+                speed(i,1)=speed(i,1)+rho_ij*nd(1);
                 speed(i,2)=speed(i,2)+rho_ij*nd(2);
             end
             
+            if i == 7 && all(communication_qualities(:, i) <= PT-0.07) && ctrl_flag
+                ctrl_flag = false;
+                fprintf('flag changed: %d\n', ctrl_flag);
+            end
 
         end
         swarm(i,1)=swarm(i,1)+speed(i,1)*h;
@@ -264,6 +270,12 @@ for k=1:max_iter
     end
 
     pause(0)
+
+    % Turn on the ctrl flag between 10s and 11s and ctrl flag is off
+        if t_Elapsed(end) > 10 && t_Elapsed(end) < 11 && ~ctrl_flag
+            ctrl_flag = true;
+            fprintf('flag changed: %d\n', ctrl_flag);
+        end
 
 end
 
