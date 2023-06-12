@@ -113,7 +113,11 @@ node_colors = [
    ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
 % node_colors = rand(swarm_size, 3); % Randomize node colors
+
+% Ctrl flag 1 is used to split the formation
 ctrl_flag = false;
+
+% Ctrl flag 2 is used to rejoin the formation, flag time adds a delay for the formation to start rejoining
 ctrl_flag2 = false;
 flag2_time = 0;
 
@@ -229,45 +233,53 @@ for k=1:max_iter
             nd=(qi-qj)/sqrt(1+norm(qi-qj)*sim_speed);
 
             % Update velocities of agents
-            % Make the one agent fixed
-            if i < 4 && any(ctrl_flag)
-                speed(i,1)=speed(i,1)+rho_ij*nd(1) + 0.5;
-                if speed(i,1) < 0
-                    speed(i,1) = 0;
+            if any(ctrl_flag) % Flag 1: force the swarm to split in two
+
+                if i < 4 % agents 1-3
+                    speed(i,1)=speed(i,1)+rho_ij*nd(1) + 0.5;
+                    if speed(i,1) < 0 % Dont allow backtracking
+                        speed(i,1) = 0;
+                    end
+                    
+                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
+    
+                elseif i >= 4 % agents 4-7
+                    speed(i,1)=speed(i,1)+rho_ij*nd(1) - 0.5;
+                    if speed(i,1) > 0 % Dont allow backtracking
+                        speed(i,1) = 0;
+                    end
+                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
                 end
-                
-                speed(i,2)=speed(i,2)+rho_ij*nd(2);
-
-            elseif i >= 4 && any(ctrl_flag)
-                speed(i,1)=speed(i,1)+rho_ij*nd(1) - 0.5;
-                if speed(i,1) > 0
-                    speed(i,1) = 0;
+                    
+            elseif any(ctrl_flag2) % Flag 2: have the two swarms go towards each other
+                if i < 4 % agents 1-3
+                    speed(i,1)=speed(i,1)+rho_ij*nd(1) - 0.5;
+                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
+    
+                elseif i >= 4 % agents 4-7
+                    speed(i,1)=speed(i,1)+rho_ij*nd(1) + 0.5;
+                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
                 end
-                
-                speed(i,2)=speed(i,2)+rho_ij*nd(2);
-
-            elseif i < 4 && any(ctrl_flag2)
-                speed(i,1)=speed(i,1)+rho_ij*nd(1) - 0.5;
-                speed(i,2)=speed(i,2)+rho_ij*nd(2);
-
-            elseif i >= 4 && any(ctrl_flag2)
-                speed(i,1)=speed(i,1)+rho_ij*nd(1) + 0.5;
-                speed(i,2)=speed(i,2)+rho_ij*nd(2);
             else
-                fprintf("normal mode \n");
+                % Normal controller
                 speed(i,1)=speed(i,1)+rho_ij*nd(1);
                 speed(i,2)=speed(i,2)+rho_ij*nd(2);
+                fprintf("normal control \n");
             end
             
-            if i == 1
-                if communication_qualities(i, 7) > 0 && communication_qualities(i, 7) < 0.5 && any(ctrl_flag)
+            % Flag control
+            if i == 1 % use agent 1 to view conditions
+                if communication_qualities(i, 7) > 0 && communication_qualities(i, 7) < 0.5 && any(ctrl_flag) 
+                    % turn off flag 1 when (coms are bad = sufficiently split swarm) 
                     ctrl_flag = false;
-                    flag2_time = t_Elapsed(end) + 10;
-                    fprintf('flag1 changed to 0: %d\n', communication_qualities(i, 7));
+                    flag2_time = t_Elapsed(end) + 10; % This constant sets how long the split should stay put
+                    fprintf('flag1 changed to FALSE: %d\n', communication_qualities(i, 7));
                 elseif ~any(ctrl_flag2) && t_Elapsed(end) > flag2_time && t_Elapsed(end) < flag2_time + 0.5
+                    % turn on flag 2 when time has elasped
                     ctrl_flag2 = true;
                     fprintf('flag2 changed to TRUE\n');
                 elseif communication_qualities(i, 7) > PT && any(ctrl_flag2)
+                    % (turn off flag2 = resume normal control) when coms reach PT
                     ctrl_flag2 = false;
                     fprintf('flag2 changed to FALSE: %d\n', communication_qualities(i, 7));
                 end
@@ -302,10 +314,10 @@ for k=1:max_iter
     pause(0)
 
     % Turn on the ctrl flag between 10s and 11s and ctrl flag is off
-        if t_Elapsed(end) > 10 && t_Elapsed(end) < 11 && ~ctrl_flag
-            ctrl_flag = true;
-            fprintf('flag changed: %d\n', ctrl_flag);
-        end
+    if t_Elapsed(end) > 10 && t_Elapsed(end) < 11 && ~ctrl_flag
+        ctrl_flag = true;
+        fprintf('flag changed: %d\n', ctrl_flag);
+    end
 
 end
 
