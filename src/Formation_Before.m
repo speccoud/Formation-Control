@@ -154,18 +154,11 @@ for k=1:max_iter
 
     figure(3);
     clf; % Clear the figure
-    dt = delaunayTriangulation(swarm(:, 1), swarm(:, 2));           % Compute the Delaunay triangulation
-    edgeIndex = edges(dt);                                          % Triangulation edge indices
-    % triplot(dt,'o--');
+    
     set(gcf, 'Position', figure_positions(3, :));
 
     [img, map, alphachannel] = imread('drone','png');
-    % img = imresize(img, 2);
     markersize = [4, 4];
-    
-    
-   
-    
 
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
@@ -174,16 +167,12 @@ for k=1:max_iter
     hold on;
     
      for k = 1:swarm_size
-       
         x_low = swarm(k, 1) - markersize(1)/2;
         x_high = swarm(k, 1) + markersize(1)/2;
         y_low = swarm(k, 2) - markersize(2)/2;
         y_high = swarm(k, 2) + markersize(2)/2;
  
-        % scatter(swarm(k, 1), swarm(k, 2), [], node_colors, 'filled'); 
-        % imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(node_colors(k), [size(img, 1), size(img, 2), 1]));        
         imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(k, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
-
      end
      
 

@@ -147,16 +147,27 @@ for k=1:max_iter
     end
 
     figure(3);
-    dt = delaunayTriangulation(swarm(:, 1), swarm(:, 2));           % Compute the Delaunay triangulation
-    edgeIndex = edges(dt);                                          % Triangulation edge indices
-    triplot(dt,'o--');
+    clf; % Clear the figure
+   
     set(gcf, 'Position', figure_positions(3, :));
-    scatter(swarm(:, 1), swarm(:, 2), [], node_colors, 'filled');
+
+    [img, map, alphachannel] = imread('drone','png');
+    markersize = [4, 4];
+
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
     axis equal;
     hold on;
+
+    for k = 1:swarm_size
+        x_low = swarm(k, 1) - markersize(1)/2;
+        x_high = swarm(k, 1) + markersize(1)/2;
+        y_low = swarm(k, 2) - markersize(2)/2;
+        y_high = swarm(k, 2) + markersize(2)/2;
+ 
+        imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(k, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
+    end
 
     %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
