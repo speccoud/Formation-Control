@@ -38,7 +38,7 @@ x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
 y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
 
 % Combine the x and y coordinates into a single matrix
-% swarm = [x_coords, y_coords];
+swarm = [x_coords, y_coords];
 
 
 % Print agents' initial positions

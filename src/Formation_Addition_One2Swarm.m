@@ -27,7 +27,7 @@ swarm = [-5,  14;
          35,  -4;
          68,   0;
          60,  20;
-         160, 13];
+         150, 13];
 
 % Define the range of coordinates
 x_min = 0;

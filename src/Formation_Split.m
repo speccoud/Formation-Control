@@ -274,7 +274,7 @@ for k=1:max_iter
                     ctrl_flag = false;
                     flag2_time = t_Elapsed(end) + 10; % This constant sets how long the split should stay put
                     fprintf('flag1 changed to FALSE: %d\n', communication_qualities(i, 7));
-                elseif ~any(ctrl_flag2) && t_Elapsed(end) > flag2_time && t_Elapsed(end) < flag2_time + 0.5
+                elseif ~any(ctrl_flag2) && t_Elapsed(end) > flag2_time && t_Elapsed(end) < flag2_time + 1
                     % turn on flag 2 when time has elasped
                     ctrl_flag2 = true;
                     fprintf('flag2 changed to TRUE\n');

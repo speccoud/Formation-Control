@@ -7,7 +7,6 @@ clc;
 max_iter   = 500;
 h           = 1;
 swarm_size  = 7;
-swarm_ctrl_size = swarm_size;
 alpha       = 10^(-5);                 % system parameter about antenna characteristics
 delta       = 2;                       % required application data rate
 Beta        = alpha*(2^delta-1);
@@ -15,18 +14,21 @@ v           = 3;                       % path loss exponent
 r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
-sim_speed   = 0.5;
+sim_speed   = 1;
 communication_qualities = zeros(swarm_size, swarm_size);
 
 
 %% ---Initialize Agents' Positions---
-swarm = [-5,  14;
-         -5, -19;
-         20,  20;
-         35,  -4;
-         68,   0;
-         60,  20;
-         0,    0];
+swarm = [
+    % Nonagon positions
+    -20, 40;
+    20, 40;
+    40, 20;
+    40, -20;
+    0, -40;
+    -40, -20;
+    -40, 20;
+    ];
 
 % Define the range of coordinates
 x_min = 0;
@@ -99,7 +101,6 @@ tic
 line_colors = rand(swarm_size, swarm_size, 3);
 label_colors = line_colors;
 
-
 % Define the color matrix with predefined colors
 node_colors = [
     108 155 207;  % Light Blue
@@ -108,12 +109,12 @@ node_colors = [
     255 217 90;   % Light Gold
     122 168 116;  % Green
     147 132 209;  % Purple
-    245 80 80;    % Red
-    % 164 144 124;  % Brown
+    245 80 80;     % Red
+    164 144 124;  % Brown
    ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
-% node_colors = rand(swarm_size, 3); % Randomize node colors
-ctrl_flag = false;
+node_colors = rand(swarm_size, 3); % Randomize node colors
+S = imread('drone.png');
 
 %% ---Simulation---
 for k=1:max_iter
@@ -152,16 +153,39 @@ for k=1:max_iter
     end
 
     figure(3);
+    clf; % Clear the figure
     dt = delaunayTriangulation(swarm(:, 1), swarm(:, 2));           % Compute the Delaunay triangulation
     edgeIndex = edges(dt);                                          % Triangulation edge indices
-    triplot(dt,'o--');
+    % triplot(dt,'o--');
     set(gcf, 'Position', figure_positions(3, :));
-    scatter(swarm(:, 1), swarm(:, 2), [], node_colors, 'filled');
+
+    [img, map, alphachannel] = imread('drone','png');
+    % img = imresize(img, 2);
+    markersize = [4, 4];
+    
+    
+   
+    
+
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
     axis equal;
     hold on;
+    
+     for k = 1:swarm_size
+       
+        x_low = swarm(k, 1) - markersize(1)/2;
+        x_high = swarm(k, 1) + markersize(1)/2;
+        y_low = swarm(k, 2) - markersize(2)/2;
+        y_high = swarm(k, 2) + markersize(2)/2;
+ 
+        % scatter(swarm(k, 1), swarm(k, 2), [], node_colors, 'filled'); 
+        % imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(node_colors(k), [size(img, 1), size(img, 2), 1]));        
+        imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(k, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
+
+     end
+     
 
     %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
@@ -205,12 +229,14 @@ for k=1:max_iter
         end
     end
 
+    hold off;
+
     axis equal;
 
     %--- Controller ---
-    for i=1:swarm_ctrl_size
+    for i=1:swarm_size
         rho_ij=0;
-        for j=[1:(i-1),(i+1):swarm_ctrl_size]
+        for j=[1:(i-1),(i+1):swarm_size]
             rij=sqrt((swarm(i,1)-swarm(j,1))^2+(swarm(i,2)-swarm(j,2))^2);
             aij=exp(-alpha*(2^delta-1)*(rij/r0)^v);
             gij=rij/sqrt(rij^2+r0^2);
@@ -226,30 +252,9 @@ for k=1:max_iter
             qj=[swarm(j,1),swarm(j,2)];
             nd=(qi-qj)/sqrt(1+norm(qi-qj)*sim_speed);
 
-            % Update velocities of agents
-            if i == 6 && any(ctrl_flag)
-                % When ctrl flag is active force agent 7 to exit swarm
-                speed(i,1)= 2;
-                speed(i,2)= 0;
-            elseif i ~= 6 && any(ctrl_flag)
-                % When ctrl flag is active cap the x direction speed of rest of swarm members
-                speed(i,1)=speed(i,1)+rho_ij*nd(1);
-                if speed(i,1) > 0.1
-                    speed(i,1) = 0.1;
-                end
-                
-                speed(i,2)=speed(i,2)+rho_ij*nd(2);
-            else
-                % when no ctrl flag is active allow normal controller actions
-                speed(i,1)=speed(i,1)+rho_ij*nd(1);
-                speed(i,2)=speed(i,2)+rho_ij*nd(2);
-            end
             
-            if i == 6 && all(communication_qualities(:, i) <= PT-0.07) && ctrl_flag
-                ctrl_flag = false;
-                fprintf('flag changed: %d\n', ctrl_flag);
-            end
-            
+            speed(i,1)=speed(i,1)+rho_ij*nd(1);
+            speed(i,2)=speed(i,2)+rho_ij*nd(2);
 
         end
         swarm(i,1)=swarm(i,1)+speed(i,1)*h;
@@ -271,15 +276,8 @@ for k=1:max_iter
         rn=smooth(rn);
         set(rn_Plot, 'xdata', t_Elapsed, 'ydata', rn);      % Plot rn
         set(rn_Text, 'Position', [t_Elapsed(end), rn(end)], 'String', sprintf('rn: %.4f', rn(end)));
-        
+
         pause(0);
-        
-        % Turn on the ctrl flag between 10s and 11s and ctrl flag is off
-        if t_Elapsed(end) > 10 && t_Elapsed(end) < 11 && ~ctrl_flag
-            ctrl_flag = true;
-            fprintf('flag changed: %d\n', ctrl_flag);
-        end
-        
 
     end
 
