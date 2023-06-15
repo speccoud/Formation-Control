@@ -167,7 +167,7 @@ for k=1:max_iter
     %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
         for j= 1:swarm_size
-            if i ~= j && communication_qualities(i, j) > 0
+            if i ~= j && communication_qualities(i, j) > PT
 
                 hold on;
 
