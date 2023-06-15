@@ -77,7 +77,6 @@ set(gcf, 'Position', figure_positions(1, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$J_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 title('Average Communication Performance Indicator');
-axis ([0 100 0.97, 0.98]);
 hold on
 Jn_Text = text(t_Elapsed(end), Jn(end), sprintf('Jn: %.4f', Jn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
 
@@ -87,7 +86,6 @@ set(gcf, 'Position', figure_positions(2, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$r_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 title('Average Distance Indicator');
-axis equal;
 hold on
 rn_Text = text(t_Elapsed(end), rn(end), sprintf('rn: %.4f', rn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
 
@@ -289,6 +287,12 @@ for k=1:max_iter
         end
 
 end
+
+figure(1)
+axis([0 max_iter+10  min(Jn) max(Jn)]);  % Update the limits for Figure 1
+
+figure(2)
+axis([0 max_iter+10 min(rn) max(rn)]);  % Update the limits for Figure 2
 
 % Plot the final node trace outside the loop
 figure(4)
