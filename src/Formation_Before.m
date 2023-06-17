@@ -4,12 +4,12 @@ close all;
 clc;
 
 % Initialize all parameters
-max_iter   = 500;
+max_iter    = 500;
 h           = 1;
 swarm_size  = 7;
 alpha       = 10^(-5);                 % system parameter about antenna characteristics
 delta       = 2;                       % required application data rate
-Beta        = alpha*(2^delta-1);
+beta        = alpha*(2^delta-1);
 v           = 3;                       % path loss exponent
 r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
@@ -20,27 +20,26 @@ communication_qualities = zeros(swarm_size, swarm_size);
 
 %% ---Initialize Agents' Positions---
 swarm = [
-    % Nonagon positions
-    -20, 40;
-    20, 40;
-    40, 20;
-    40, -20;
-    0, -40;
-    -40, -20;
-    -40, 20;
+    -5,  14;
+    -5, -19;
+     0,   0;
+    35,  -4;
+    68,   0;
+    72,  13;
+    72, -18;
     ];
 
-% Define the range of coordinates
-x_min = 0;
-x_max = 50;
-y_min = 0;
-y_max = 50;
-
-% Generate random positions for the swarm
-x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
-y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
-
-% Combine the x and y coordinates into a single matrix
+% % Define the range of coordinates
+% x_min = 0;
+% x_max = 50;
+% y_min = 0;
+% y_max = 50;
+%
+% % Generate random positions for the swarm
+% x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
+% y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
+%
+% % Combine the x and y coordinates into a single matrix
 % swarm = [x_coords, y_coords];
 
 
@@ -52,7 +51,8 @@ y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
 %     fprintf("\n")
 % end
 
-% Initialize the velocity
+
+%% Initialize the velocity
 for j = 1:swarm_size
     speed(j,1) = 0;
     speed(j,2) = 0;
@@ -73,8 +73,9 @@ figure_positions = [
     750, 10, 500, 400;    % Position for Figure 4
     ];
 
+% Plot Jn
 figure(1)
-Jn_Plot = plot(t_Elapsed, Jn);                  % Plot Jn
+Jn_Plot = plot(t_Elapsed, Jn);
 set(gcf, 'Position', figure_positions(1, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$J_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
@@ -82,8 +83,9 @@ title('Average Communication Performance Indicator');
 hold on
 Jn_Text = text(t_Elapsed(end), Jn(end), sprintf('Jn: %.4f', Jn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
 
+% Plot rn
 figure(2)
-rn_Plot = plot(t_Elapsed, rn);                  % Plot rn
+rn_Plot = plot(t_Elapsed, rn);
 set(gcf, 'Position', figure_positions(2, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$r_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
@@ -107,11 +109,9 @@ node_colors = [
     255 217 90;   % Light Gold
     122 168 116;  % Green
     147 132 209;  % Purple
-    245 80 80;     % Red
-    164 144 124;  % Brown
-   ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
+    245 80 80     % Red
+    ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
-node_colors = rand(swarm_size, 3); % Randomize node colors
 S = imread('drone.png');
 
 %% ---Simulation---
@@ -152,27 +152,27 @@ for k=1:max_iter
 
     figure(3);
     clf; % Clear the figure
-    
+
     set(gcf, 'Position', figure_positions(3, :));
 
     [img, map, alphachannel] = imread('drone','png');
-    markersize = [4, 4];
+    markersize = [3, 3];
 
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
     axis equal;
     hold on;
-    
-     for k = 1:swarm_size
+
+    for k = 1:swarm_size
         x_low = swarm(k, 1) - markersize(1)/2;
         x_high = swarm(k, 1) + markersize(1)/2;
         y_low = swarm(k, 2) - markersize(2)/2;
         y_high = swarm(k, 2) + markersize(2)/2;
- 
+
         imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(k, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
-     end
-     
+    end
+
 
     %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
@@ -228,7 +228,7 @@ for k=1:max_iter
             aij=exp(-alpha*(2^delta-1)*(rij/r0)^v);
             gij=rij/sqrt(rij^2+r0^2);
             if aij>=PT
-                rho_ij=(-Beta*v*rij^(v+2)-Beta*v*(r0^2)*(rij^v)+r0^(v+2))*exp(-Beta*(rij/r0)^v)/sqrt((rij^2+r0^2)^3);
+                rho_ij=(-beta*v*rij^(v+2)-beta*v*(r0^2)*(rij^v)+r0^(v+2))*exp(-beta*(rij/r0)^v)/sqrt((rij^2+r0^2)^3);
             else
                 rho_ij=0;
             end
@@ -239,7 +239,7 @@ for k=1:max_iter
             qj=[swarm(j,1),swarm(j,2)];
             nd=(qi-qj)/sqrt(1+norm(qi-qj)*sim_speed);
 
-            
+
             speed(i,1)=speed(i,1)+rho_ij*nd(1);
             speed(i,2)=speed(i,2)+rho_ij*nd(2);
 
