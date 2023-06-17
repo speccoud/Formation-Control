@@ -112,7 +112,6 @@ node_colors = [
     245 80 80     % Red
     ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
-S = imread('drone.png');
 
 %% ---Simulation---
 for k=1:max_iter
@@ -152,9 +151,7 @@ for k=1:max_iter
 
     figure(3);
     clf; % Clear the figure
-
     set(gcf, 'Position', figure_positions(3, :));
-
     [img, map, alphachannel] = imread('drone','png');
     markersize = [3, 3];
 
