@@ -14,7 +14,8 @@ v           = 3;                       % path loss exponent
 r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
-sim_speed   = 1;
+formation_speed = 0.5;
+travel_speed = 1.5;
 communication_qualities = zeros(swarm_size, swarm_size);
 
 
@@ -22,34 +23,12 @@ communication_qualities = zeros(swarm_size, swarm_size);
 swarm = [
     -5,  14;
     -5, -19;
-     0,   0;
+    0,   0;
     35,  -4;
     68,   0;
     72,  13;
     72, -18;
     ];
-
-% % Define the range of coordinates
-% x_min = 0;
-% x_max = 50;
-% y_min = 0;
-% y_max = 50;
-%
-% % Generate random positions for the swarm
-% x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
-% y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
-%
-% % Combine the x and y coordinates into a single matrix
-% swarm = [x_coords, y_coords];
-
-
-% Print agents' initial positions
-% for i = 1:swarm_size
-%     for j = 1:2
-%         fprintf("%d", swarm(i, j))
-%     end
-%     fprintf("\n")
-% end
 
 
 %% Initialize the velocity
@@ -124,6 +103,10 @@ for k=1:max_iter
     % Plot all nodes as markers
     scatter(swarm(:, 1), swarm(:, 2), [], node_colors, 'filled');
 
+    % The position of the destination
+    dest_x = 40;
+    dest_y = 40;
+
     %--- Formation Scene + Node Trace---
     for i = 1:swarm_size
         % Plot the node trace
@@ -154,7 +137,8 @@ for k=1:max_iter
     set(gcf, 'Position', figure_positions(3, :));
     [img, map, alphachannel] = imread('drone','png');
     markersize = [3, 3];
-
+    fill(dest_x + [-2 2 2 -2 -2], dest_y + [-2 -2 2 2 -2], 'r');
+    text(dest_x + 5, dest_y, 'Destination', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
@@ -217,6 +201,12 @@ for k=1:max_iter
 
     axis equal;
 
+    % Calculate the distances between each node and the destination
+    distances = vecnorm(swarm - repmat([dest_x, dest_y], swarm_size, 1), 2, 2);
+
+    % Find the index of the node with the minimum distance
+    [~, closest_node_index] = min(distances);
+
     %--- Controller ---
     for i=1:swarm_size
         rho_ij=0;
@@ -234,11 +224,21 @@ for k=1:max_iter
             communication_qualities(i,j) = phi_rij;
             qi=[swarm(i,1),swarm(i,2)];
             qj=[swarm(j,1),swarm(j,2)];
-            nd=(qi-qj)/sqrt(1+norm(qi-qj)*sim_speed);
+            nd=(qi-qj)/sqrt(1+norm(qi-qj)*formation_speed);
 
-            speed(i,1)=speed(i,1)+rho_ij*nd(1);
-            speed(i,2)=speed(i,2)+rho_ij*nd(2);
+            speed(i,1)=speed(i,1)+rho_ij* travel_speed * nd(1);
+            speed(i,2)=speed(i,2)+rho_ij* travel_speed * nd(2);
 
+            %---Senario 1: Reach to Goal---
+            if i == closest_node_index || true
+                destination_vector = [dest_x - swarm(i, 1), dest_y - swarm(i, 2)];
+                nd = destination_vector / norm(destination_vector);
+            else
+                nd = (qi - qj) / sqrt(1 + norm(qi - qj) * formation_speed);
+            end
+
+            speed(i, 1) = speed(i, 1) + rho_ij * nd(1);
+            speed(i, 2) = speed(i, 2) + rho_ij * nd(2);
         end
         swarm(i,1)=swarm(i,1)+speed(i,1)*h;
         swarm(i,2)=swarm(i,2)+speed(i,2)*h;
@@ -269,10 +269,10 @@ for k=1:max_iter
 end
 
 figure(1)
-axis([0 max_iter+10  min(Jn) max(Jn)]);  % Update the limits for Figure 1
+axis([0 max_iter+10  min(Jn) max(Jn)+5]);  % Update the limits for Figure 1
 
 figure(2)
-axis([0 max_iter+10 min(rn) max(rn)]);  % Update the limits for Figure 2
+axis([0 max_iter+10 min(rn) max(rn)+5]);  % Update the limits for Figure 2
 
 % Plot the final node trace outside the loop
 figure(4)
