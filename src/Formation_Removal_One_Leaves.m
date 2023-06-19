@@ -119,6 +119,9 @@ for k=1:max_iter
     % Plot the node trace inside the loop
     figure(4)
     set(gcf, 'Position', figure_positions(4, :));
+    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    title('Node Trace');
     hold on;
 
     % Plot all nodes as markers
@@ -310,9 +313,6 @@ for i = 1:swarm_size
     trace_y = squeeze(swarm_trace(:, i, 2));
     plot(trace_x, trace_y);
 end
-xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-title('Node Trace');
 hold off;
 axis([x_min x_max y_min y_max]);
 hold off;

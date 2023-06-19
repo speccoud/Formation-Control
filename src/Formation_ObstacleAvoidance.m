@@ -4,53 +4,42 @@ close all;
 clc;
 
 % Initialize all parameters
-max_iter   = 500;
+max_iter    = 500;
 h           = 1;
 swarm_size  = 7;
-swarm_ctrl_size = swarm_size;
 alpha       = 10^(-5);                 % system parameter about antenna characteristics
 delta       = 2;                       % required application data rate
-Beta        = alpha*(2^delta-1);
+beta        = alpha*(2^delta-1);
 v           = 3;                       % path loss exponent
 r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
-sim_speed   = 0.5;
+formation_speed = 0.5;
+travel_speed = 1.5;
 communication_qualities = zeros(swarm_size, swarm_size);
+
+% The position of the destination
+dest_x = 60;
+dest_y = 60;
+
+% The position of the obstacle
+obs_x = 40;
+obs_y = 40;
 
 
 %% ---Initialize Agents' Positions---
-swarm = [-5,  14;
-         -5, -19;
-         0,    0;
-         20,  20;
-         35,  -4;
-         68,   0;
-         60,  20];
-
-% Define the range of coordinates
-x_min = 0;
-x_max = 50;
-y_min = 0;
-y_max = 50;
-
-% Generate random positions for the swarm
-x_coords = x_min + (x_max - x_min) * rand(swarm_size, 1);
-y_coords = y_min + (y_max - y_min) * rand(swarm_size, 1);
-
-% Combine the x and y coordinates into a single matrix
-% swarm = [x_coords, y_coords];
+swarm = [
+    -5,  14;
+    -5, -19;
+    0,   0;
+    35,  -4;
+    68,   0;
+    72,  13;
+    72, -18;
+    ];
 
 
-% Print agents' initial positions
-% for i = 1:swarm_size
-%     for j = 1:2
-%         fprintf("%d", swarm(i, j))
-%     end
-%     fprintf("\n")
-% end
-
-% Initialize the velocity
+%% ---Initialize the velocity---
 for j = 1:swarm_size
     speed(j,1) = 0;
     speed(j,2) = 0;
@@ -71,23 +60,23 @@ figure_positions = [
     750, 10, 500, 400;    % Position for Figure 4
     ];
 
+% Plot Jn
 figure(1)
-Jn_Plot = plot(t_Elapsed, Jn);                  % Plot Jn
+Jn_Plot = plot(t_Elapsed, Jn);
 set(gcf, 'Position', figure_positions(1, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$J_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 title('Average Communication Performance Indicator');
-axis ([0 100 0.97, 0.98]);
 hold on
 Jn_Text = text(t_Elapsed(end), Jn(end), sprintf('Jn: %.4f', Jn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
 
+% Plot rn
 figure(2)
-rn_Plot = plot(t_Elapsed, rn);                  % Plot rn
+rn_Plot = plot(t_Elapsed, rn);
 set(gcf, 'Position', figure_positions(2, :));
 xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 ylabel('$r_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
 title('Average Distance Indicator');
-axis equal;
 hold on
 rn_Text = text(t_Elapsed(end), rn(end), sprintf('rn: %.4f', rn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
 
@@ -99,7 +88,6 @@ tic
 line_colors = rand(swarm_size, swarm_size, 3);
 label_colors = line_colors;
 
-
 % Define the color matrix with predefined colors
 node_colors = [
     108 155 207;  % Light Blue
@@ -108,18 +96,9 @@ node_colors = [
     255 217 90;   % Light Gold
     122 168 116;  % Green
     147 132 209;  % Purple
-    245 80 80;    % Red
-    % 164 144 124;  % Brown
-   ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
+    245 80 80     % Red
+    ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
-% node_colors = rand(swarm_size, 3); % Randomize node colors
-
-% Ctrl flag 1 is used to split the formation
-ctrl_flag = false;
-
-% Ctrl flag 2 is used to rejoin the formation, flag time adds a delay for the formation to start rejoining
-ctrl_flag2 = false;
-flag2_time = 0;
 
 %% ---Simulation---
 for k=1:max_iter
@@ -127,9 +106,6 @@ for k=1:max_iter
     % Plot the node trace inside the loop
     figure(4)
     set(gcf, 'Position', figure_positions(4, :));
-    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-    title('Node Trace');
     hold on;
 
     % Plot all nodes as markers
@@ -162,16 +138,17 @@ for k=1:max_iter
 
     figure(3);
     clf; % Clear the figure
-   
     set(gcf, 'Position', figure_positions(3, :));
-
     [img, map, alphachannel] = imread('drone','png');
-    markersize = [4, 4];
-
+    markersize = [3, 3];
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
     axis equal;
+    fill(dest_x + [-2 2 2 -2 -2], dest_y + [-2 -2 2 2 -2], 'k');
+    text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
+    fill(obs_x + [-8 8 8 -8 -8], obs_y + [-8 -8 8 8 -8], 'r');
+    text(obs_x + 10, obs_y, 'Obstacle', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
     hold on;
 
     for k = 1:swarm_size
@@ -179,14 +156,15 @@ for k=1:max_iter
         x_high = swarm(k, 1) + markersize(1)/2;
         y_low = swarm(k, 2) - markersize(2)/2;
         y_high = swarm(k, 2) + markersize(2)/2;
- 
+
         imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(k, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
     end
+
 
     %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
         for j= 1:swarm_size
-            if i ~= j && communication_qualities(i, j) > PT
+            if i ~= j && communication_qualities(i, j) > 0
 
                 hold on;
 
@@ -225,17 +203,38 @@ for k=1:max_iter
         end
     end
 
+    hold off;
+
     axis equal;
 
+    % Calculate the distances between each node and the destination
+    distances = vecnorm(swarm - repmat([dest_x, dest_y], swarm_size, 1), 2, 2);
+
+    % Find the index of the node with the minimum distance
+    [~, closest_node_index] = min(distances);
+
     %--- Controller ---
-    for i=1:swarm_ctrl_size
+    for i=1:swarm_size
         rho_ij=0;
-        for j=[1:(i-1),(i+1):swarm_ctrl_size]
+
+        % Calculate the vector from the obstacle to the current node
+        avoidance_vec = [obs_y - swarm(i, 2), -(obs_x - swarm(i, 1))];
+
+        % Normalize the avoidance vector
+        avoidance_vec = avoidance_vec / norm(avoidance_vec);
+
+        % Calculate the obstacle avoidance speed
+        avoidance_speed = 1 / sqrt((obs_x - swarm(i, 1))^2 + (obs_y - swarm(i, 2))^2) * avoidance_vec;
+        
+        % Update the speed with obstacle avoidance
+        speed(i, :) = speed(i, :) + avoidance_speed;
+
+        for j=[1:(i-1),(i+1):swarm_size]
             rij=sqrt((swarm(i,1)-swarm(j,1))^2+(swarm(i,2)-swarm(j,2))^2);
             aij=exp(-alpha*(2^delta-1)*(rij/r0)^v);
             gij=rij/sqrt(rij^2+r0^2);
             if aij>=PT
-                rho_ij=(-Beta*v*rij^(v+2)-Beta*v*(r0^2)*(rij^v)+r0^(v+2))*exp(-Beta*(rij/r0)^v)/sqrt((rij^2+r0^2)^3);
+                rho_ij=(-beta*v*rij^(v+2)-beta*v*(r0^2)*(rij^v)+r0^(v+2))*exp(-beta*(rij/r0)^v)/sqrt((rij^2+r0^2)^3);
             else
                 rho_ij=0;
             end
@@ -244,61 +243,21 @@ for k=1:max_iter
             communication_qualities(i,j) = phi_rij;
             qi=[swarm(i,1),swarm(i,2)];
             qj=[swarm(j,1),swarm(j,2)];
-            nd=(qi-qj)/sqrt(1+norm(qi-qj)*sim_speed);
+            nd=(qi-qj)/sqrt(1+norm(qi-qj)*formation_speed);
 
-            % Update velocities of agents
-            if any(ctrl_flag) % Flag 1: force the swarm to split in two
+            speed(i,1)=speed(i,1)+rho_ij* travel_speed * nd(1);
+            speed(i,2)=speed(i,2)+rho_ij* travel_speed * nd(2);
 
-                if i < 4 % agents 1-3
-                    speed(i,1)=speed(i,1)+rho_ij*nd(1) + 0.5;
-                    if speed(i,1) < 0 % Dont allow backtracking
-                        speed(i,1) = 0;
-                    end
-                    
-                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
-    
-                elseif i >= 4 % agents 4-7
-                    speed(i,1)=speed(i,1)+rho_ij*nd(1) - 0.5;
-                    if speed(i,1) > 0 % Dont allow backtracking
-                        speed(i,1) = 0;
-                    end
-                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
-                end
-                    
-            elseif any(ctrl_flag2) % Flag 2: have the two swarms go towards each other
-                if i < 4 % agents 1-3
-                    speed(i,1)=speed(i,1)+rho_ij*nd(1) - 0.5;
-                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
-    
-                elseif i >= 4 % agents 4-7
-                    speed(i,1)=speed(i,1)+rho_ij*nd(1) + 0.5;
-                    speed(i,2)=speed(i,2)+rho_ij*nd(2);
-                end
+            %---Senario 1: Reach to Goal---
+            if i == closest_node_index || true
+                destination_vector = [dest_x - swarm(i, 1), dest_y - swarm(i, 2)];
+                nd = destination_vector / norm(destination_vector);
             else
-                % Normal controller
-                speed(i,1)=speed(i,1)+rho_ij*nd(1);
-                speed(i,2)=speed(i,2)+rho_ij*nd(2);
-                fprintf("normal control \n");
+                nd = (qi - qj) / sqrt(1 + norm(qi - qj) * formation_speed);
             end
-            
-            % Flag control
-            if i == 1 % use agent 1 to view conditions
-                if communication_qualities(i, 7) > 0 && communication_qualities(i, 7) < 0.5 && any(ctrl_flag) 
-                    % turn off flag 1 when (coms are bad = sufficiently split swarm) 
-                    ctrl_flag = false;
-                    flag2_time = t_Elapsed(end) + 10; % This constant sets how long the split should stay put
-                    fprintf('flag1 changed to FALSE: %d\n', communication_qualities(i, 7));
-                elseif ~any(ctrl_flag2) && t_Elapsed(end) > flag2_time && t_Elapsed(end) < flag2_time + 1
-                    % turn on flag 2 when time has elasped
-                    ctrl_flag2 = true;
-                    fprintf('flag2 changed to TRUE\n');
-                elseif communication_qualities(i, 7) > PT && any(ctrl_flag2)
-                    % (turn off flag2 = resume normal control) when coms reach PT
-                    ctrl_flag2 = false;
-                    fprintf('flag2 changed to FALSE: %d\n', communication_qualities(i, 7));
-                end
-                
-            end
+
+            speed(i, 1) = speed(i, 1) + rho_ij * nd(1);
+            speed(i, 2) = speed(i, 2) + rho_ij * nd(2);
 
         end
         swarm(i,1)=swarm(i,1)+speed(i,1)*h;
@@ -327,13 +286,13 @@ for k=1:max_iter
 
     pause(0)
 
-    % Turn on the ctrl flag between 10s and 11s and ctrl flag is off
-    if t_Elapsed(end) > 10 && t_Elapsed(end) < 11 && ~ctrl_flag
-        ctrl_flag = true;
-        fprintf('flag changed: %d\n', ctrl_flag);
-    end
-
 end
+
+figure(1)
+axis([0 max_iter+10  min(Jn) max(Jn)+5]);  % Update the limits for Figure 1
+
+figure(2)
+axis([0 max_iter+10 min(rn) max(rn)+5]);  % Update the limits for Figure 2
 
 % Plot the final node trace outside the loop
 figure(4)
@@ -343,6 +302,9 @@ for i = 1:swarm_size
     trace_y = squeeze(swarm_trace(:, i, 2));
     plot(trace_x, trace_y);
 end
+xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+title('Node Trace');
 hold off;
 axis([x_min x_max y_min y_max]);
 hold off;

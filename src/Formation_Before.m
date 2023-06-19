@@ -52,7 +52,7 @@ swarm = [
 % end
 
 
-%% Initialize the velocity
+%% ---Initialize the velocity---
 for j = 1:swarm_size
     speed(j,1) = 0;
     speed(j,2) = 0;
@@ -118,6 +118,9 @@ for k=1:max_iter
 
     % Plot the node trace inside the loop
     figure(4)
+    title('Node Trace');
+    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     set(gcf, 'Position', figure_positions(4, :));
     hold on;
 
@@ -154,7 +157,6 @@ for k=1:max_iter
     set(gcf, 'Position', figure_positions(3, :));
     [img, map, alphachannel] = imread('drone','png');
     markersize = [3, 3];
-
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
@@ -282,9 +284,6 @@ for i = 1:swarm_size
     trace_y = squeeze(swarm_trace(:, i, 2));
     plot(trace_x, trace_y);
 end
-xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
-title('Node Trace');
 hold off;
 axis([x_min x_max y_min y_max]);
 hold off;

@@ -53,7 +53,7 @@ myVideo.FrameRate = 24;
 open(myVideo)
 
 
-%% Closed-loop dynamics of the unicycle model with Dubins constraints.
+%% ---Closed-loop dynamics of the unicycle model with Dubins constraints---
 %  Kaveh Fathian's Code Refference, 2017-2018, https://sites.google.com/view/kavehfathian/code/formation-control-of-fixed-wing-uavs
 addpath('FindControlGainMatrix');
 
@@ -146,7 +146,7 @@ omega       = min(omega, omegaMax);
 dtheta      = omega;
 
 
-%% Performance Indicators Jn and rn
+%% ---Performance Indicators Jn and rn---
 t_Elapsed = 0;
 Jn        = 0;
 rn        = 0;
