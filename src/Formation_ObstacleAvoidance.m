@@ -14,13 +14,13 @@ v           = 3;                       % path loss exponent
 r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
-formation_speed = 0.5;
-travel_speed = 1.5;
+formation_speed = 1;
+travel_speed = 3;
 communication_qualities = zeros(swarm_size, swarm_size);
 
 % The position of the destination
-dest_x = 60;
-dest_y = 60;
+dest_x = 40;
+dest_y = 80;
 
 % The position of the obstacle
 obs_x = 40;
@@ -145,10 +145,14 @@ for k=1:max_iter
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
     axis equal;
-    fill(dest_x + [-2 2 2 -2 -2], dest_y + [-2 -2 2 2 -2], 'k');
-    text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
+    % Plot the obstacle
     fill(obs_x + [-8 8 8 -8 -8], obs_y + [-8 -8 8 8 -8], 'r');
     text(obs_x + 10, obs_y, 'Obstacle', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
+    hold on;
+
+    % Plot the destination
+    fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'k');
+    text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
     hold on;
 
     for k = 1:swarm_size
@@ -225,7 +229,7 @@ for k=1:max_iter
 
         % Calculate the obstacle avoidance speed
         avoidance_speed = 1 / sqrt((obs_x - swarm(i, 1))^2 + (obs_y - swarm(i, 2))^2) * avoidance_vec;
-        
+
         % Update the speed with obstacle avoidance
         speed(i, :) = speed(i, :) + avoidance_speed;
 
@@ -243,10 +247,10 @@ for k=1:max_iter
             communication_qualities(i,j) = phi_rij;
             qi=[swarm(i,1),swarm(i,2)];
             qj=[swarm(j,1),swarm(j,2)];
-            nd=(qi-qj)/sqrt(1+norm(qi-qj)*formation_speed);
+            nd=(qi-qj)/sqrt(1+norm(qi-qj)*formation_speed) * travel_speed;
 
-            speed(i,1)=speed(i,1)+rho_ij* travel_speed * nd(1);
-            speed(i,2)=speed(i,2)+rho_ij* travel_speed * nd(2);
+            speed(i,1)=speed(i,1)+rho_ij * nd(1);
+            speed(i,2)=speed(i,2)+rho_ij * nd(2);
 
             %---Senario 1: Reach to Goal---
             if i == closest_node_index || true
