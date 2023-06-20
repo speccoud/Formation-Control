@@ -15,33 +15,55 @@ r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
 formation_speed = 1;
-travel_speed = 1;
+travel_speed = 3;
 communication_qualities = zeros(swarm_size, swarm_size);
-am         = 0.1;
-bm         = 5;
-a0         = 0.7;
-b0         = 25;
-bf         = 5;
+am         = 1; % was 0.3
+bm         = 1;
+a0         = 1; % was 0.7
+b0         = 10; % was 7
+bf         = 3;
+af         = 1;
 
 
 % The position of the destination
-dest_x = 40;
-dest_y = 80;
+dest_x = 100;
+dest_y = 100;
 
 % The position of the obstacle
-obs_x = 40;
-obs_y = 40;
+obs_x = 50;
+obs_y = 50;
+obs_side_length = 50;
+
+avoid_directions = zeros(swarm_size);
+
+swarm_obs = [];
+
+% [obs_x, obs_y;
+%              -6, 10;
+%              -4, 10;
+%              -2, 10;
+%              0, 10;
+%              2, 10;
+%              4, 10;
+%              6, 10;
+%              8, 10;
+%              10, 10;
+%              12, 10;
+%              14, 10;
+%              16, 10;
+%              18, 10;
+%              20, 10;];
 
 
 %% ---Initialize Agents' Positions---
 swarm = [
-    -5,  14;
-    -5, -19;
-    0,   0;
+     7, 0;
+    7, -20;
+    0,   -10;
     35,  -20;
-    68,   0;
-    72,  13;
-    72, -18;
+    58,   0;
+    52,  13;
+    52, -18;
     ];
 
 
@@ -49,6 +71,8 @@ swarm = [
 for j = 1:swarm_size
     speed(j,1) = 0;
     speed(j,2) = 0;
+    prev_speed(j,1) = 0;
+    prev_speed(j,2) = 0;
 end
 
 
@@ -60,10 +84,14 @@ rn        = 0;
 % Define the figure positions
 figure_positions = [
     %Left Bottom Right Width Height
-    200, 480, 500, 400;   % Position for Figure 1
-    750, 480, 500, 400    % Position for Figure 2
+    
+    750, 480, 500, 400;    % Position for Figure 2
     200, 10, 500, 400;    % Position for Figure 3
+    
+    200, 480, 500, 400;   % Position for Figure 1
     750, 10, 500, 400;    % Position for Figure 4
+    
+    
     ];
 
 % Plot Jn
@@ -105,6 +133,8 @@ node_colors = [
     245 80 80     % Red
     ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
+[img, map, alphachannel] = imread('drone','png');
+markersize = [3, 3];
 
 %% ---Simulation---
 for k=1:max_iter
@@ -145,14 +175,12 @@ for k=1:max_iter
     figure(3);
     clf; % Clear the figure
     set(gcf, 'Position', figure_positions(3, :));
-    [img, map, alphachannel] = imread('drone','png');
-    markersize = [3, 3];
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
     axis equal;
     % Plot the obstacle
-    fill(obs_x + [-8 8 8 -8 -8], obs_y + [-8 -8 8 8 -8], 'r');
+    fill(obs_x + [-obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2 -obs_side_length/2], obs_y + [-obs_side_length/2 -obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2], 'r', 'FaceAlpha', 0.3);
     text(obs_x + 10, obs_y, 'Obstacle', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
     hold on;
 
@@ -160,12 +188,18 @@ for k=1:max_iter
     fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'k');
     text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
     hold on;
-
+    if size(swarm_obs, 1)
+        plot(swarm_obs(:, 1), swarm_obs(:, 2), 'ro');
+    end
+    
     for l = 1:swarm_size
         x_low = swarm(l, 1) - markersize(1)/2;
         x_high = swarm(l, 1) + markersize(1)/2;
         y_low = swarm(l, 2) - markersize(2)/2;
         y_high = swarm(l, 2) + markersize(2)/2;
+
+        % fprintf("Swarm X: %d, ", swarm(l, 1));
+        % fprintf("Y: %d\n", swarm(l, 2));
 
         imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(l, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
     end
@@ -174,7 +208,7 @@ for k=1:max_iter
     %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
         for j= 1:swarm_size
-            if i ~= j && communication_qualities(i, j) > 0
+            if i ~= j && communication_qualities(i, j) > PT
 
                 hold on;
 
@@ -226,11 +260,19 @@ for k=1:max_iter
     %--- Controller ---
     for i=1:swarm_size
         rho_ij=0;
-
+        phi_rij=0;
+        rij=0;
         for j=[1:(i-1),(i+1):swarm_size]
             rij=sqrt((swarm(i,1)-swarm(j,1))^2+(swarm(i,2)-swarm(j,2))^2);
             aij=exp(-alpha*(2^delta-1)*(rij/r0)^v);
             gij=rij/sqrt(rij^2+r0^2);
+
+            % Check if communication link is in Jam Area
+            if lineCrossesSquare([swarm(i, 1), swarm(i, 2)], [swarm(j, 1), swarm(j, 2)], [obs_x, obs_y], obs_side_length)
+                aij = aij * 0.5; % Half the aij value when jammed 
+                gij = gij * 0.5;
+            end
+
             if aij>=PT
                 rho_ij=(-beta*v*rij^(v+2)-beta*v*(r0^2)*(rij^v)+r0^(v+2))*exp(-beta*(rij/r0)^v)/sqrt((rij^2+r0^2)^3);
             else
@@ -247,56 +289,7 @@ for k=1:max_iter
             speed(i,2)=speed(i,2)+rho_ij * nd(2);
 
             
-            % fprintf("Time: %d\n", trigger);
-            if k >= 30
-                %---Senario 1: Reach to Goal---
-                destination_vector = [dest_x - swarm(i, 1), dest_y - swarm(i, 2)];
-                dist_vector = norm(destination_vector);
-                destination_speed = destination_vector / norm(destination_vector);
-    
-                if dist_vector > bm
-                    contr_param = am;
-                else
-                    contr_param = am * (dist_vector/bm);
-                end
-    
-                speed(i, 1) = speed(i, 1) + (destination_speed(1) * contr_param);
-                speed(i, 2) = speed(i, 2) + (destination_speed(2) * contr_param);
-    
-    
-                % Calculate the vector from the obstacle to the current node
-                avoidance_vec = [obs_y - swarm(i, 2), obs_x - swarm(i, 1)];
-
-                if avoidance_vec(2) >= 0
-                    avoidance_vec(2) = -avoidance_vec(2);
-                else
-                    avoidance_vec(2) = avoidance_vec(2);
-                end
-                
-                if avoidance_vec(1) < 0
-                   avoidance_vec(1) = avoidance_vec(1);
-                else 
-                   avoidance_vec(1) = -avoidance_vec(1);
-                end
-        
-                obs_dist = norm(avoidance_vec);
-        
-                % Normalize the avoidance vector
-                avoidance_speed = avoidance_vec / norm(avoidance_vec);
-        
-                % Calculate the obstacle avoidance speed
-                % avoidance_speed = 1 / sqrt((obs_x - swarm(i, 1))^2 + (obs_y - swarm(i, 2))^2) * avoidance_vec;
-    
-                if obs_dist >= bf && obs_dist <= b0
-                    contr_param = a0 * ( obs_dist/(bf-b0) + b0/(b0-bf) );
-                    fprintf("In AVOIDANCE THRESHOLD\n")
-                else
-                    contr_param = 0;
-                end
-    
-                % Update the speed with obstacle avoidance
-                speed(i, :) = speed(i, :) + avoidance_speed * contr_param;
-            end
+           
             
             
 
@@ -306,8 +299,113 @@ for k=1:max_iter
            
 
         end
-        swarm(i,1)=swarm(i,1)+speed(i,1)*h;
-        swarm(i,2)=swarm(i,2)+speed(i,2)*h;
+
+         % fprintf("Time: %d\n", trigger);
+        if k >= 0
+            %---Senario 1: Reach to Goal---
+            
+            destination_vector = [dest_x - swarm(i, 1), dest_y - swarm(i, 2)];
+            dist_vector = norm(destination_vector);
+            destination_speed = destination_vector / norm(destination_vector);
+
+            if dist_vector > bm
+                contr_param = am;
+            else
+                contr_param = am * (dist_vector/bm);
+            end
+
+            speed(i, 1) = speed(i, 1) + (destination_speed(1) * contr_param);
+            speed(i, 2) = speed(i, 2) + (destination_speed(2) * contr_param);
+
+
+            % Calculate the vector from the obstacle to the current node
+            if size(swarm_obs) > 0
+                
+                obs = findClosestObstacle(swarm(i, :), swarm_obs);
+                % fprintf("Obstacle X: %d, ", obs(1));
+                % fprintf("Y: %d\n", obs(2));
+                
+                swarm_obs_y = obs(2);
+                swarm_obs_x = obs(1);
+                avoidance_vec = [swarm_obs_y - swarm(i, 2), -(swarm_obs_x - swarm(i, 1))];
+                obs_dist = norm(avoidance_vec);
+                avoid_direction = avoid_directions(i);
+
+                % X direction
+                if obs_dist <= b0 && avoid_direction == 0
+                    if swarm_obs_y - swarm(i, 2) < 0 % Destination is above obstacle
+                        if swarm_obs_x - swarm(i, 1) < 0
+                            avoid_direction = 1;
+                        else
+                            avoid_direction = 1;
+                        end
+                    
+                    else % Destination is below Obstacle
+                        if swarm_obs_x - swarm(i, 1) < 0 
+                            avoid_direction = 1;
+                        else
+                            avoid_direction = 1;
+                        end
+                    end
+                end
+
+                % if obs_dist > b0 && avoid_direction ~= 0
+                %     avoid_direction = 0;
+                % end
+
+
+                % avoidance_vec(2) = avoid_direction * avoidance_vec(2);
+                % avoidance_vec(1) = avoid_direction * avoidance_vec(1);
+                
+                if avoid_direction ~= 0
+                    avoidance_vec = avoid_direction * avoidance_vec;
+                    avoid_directions(i) = avoid_direction;
+                end
+        
+                % Normalize the avoidance vector
+                avoidance_speed = avoidance_vec / norm(avoidance_vec);
+
+        
+                if obs_dist >= bf && obs_dist <= b0
+                    contr_param = a0 * ( obs_dist/(bf-b0) + b0/(b0-bf) );
+                    % fprintf("In AVOIDANCE THRESHOLD\n")
+                else
+                    contr_param = 0;
+                end
+
+                if obs_dist < 5
+                    % fprintf("Wall following\n")
+                    wall_follow = af;
+                else
+                    wall_follow = 0;
+                end
+    
+                % Update the speed with obstacle avoidance
+                speed(i, :) = speed(i, :) + avoidance_speed * contr_param + avoidance_speed * wall_follow;
+            end
+            
+        end
+
+
+        if all(communication_qualities(i, :) < PT)
+            % fprintf("Agent %d:HIT JAM ZONE\n", i);
+            % fprintf("Jam area location: %d\n", swarm(i, :));
+            % fprintf("Prev Speed: %d\n\n", prev_speed(i,1));
+            if ~ismember(swarm(i, :), swarm_obs) 
+                swarm_obs = [swarm_obs; swarm(i, :)];
+                fprintf("Obstacle found, new size: %d\n", size(swarm_obs, 1));
+            end
+            
+            swarm(i,1)=swarm(i,1)-prev_speed(i,1) * 1.5;
+            swarm(i,2)=swarm(i,2)-prev_speed(i,2) * 1.5;
+        else
+            swarm(i,1)=swarm(i,1)+speed(i,1)*h;
+            swarm(i,2)=swarm(i,2)+speed(i,2)*h;
+        end
+
+        prev_speed(i,1) = speed(i,1)*h;
+        prev_speed(i,2) = speed(i,2)*h;
+        
         speed(i,1)=0;
         speed(i,2)=0;
 
