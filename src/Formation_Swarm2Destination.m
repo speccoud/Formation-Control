@@ -14,11 +14,15 @@ v           = 3;                       % path loss exponent
 r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
-formation_speed = 0.5;
-travel_speed = 1.5;
+formation_speed = 1;
+travel_speed = 1;
 communication_qualities = zeros(swarm_size, swarm_size);
+am          = 0.3;
+bm          = 1;
 
-
+% The position of the destination
+dest_x = 40;
+dest_y = 50;
 %% ---Initialize Agents' Positions---
 swarm = [
     -5,  14;
@@ -106,10 +110,6 @@ for k=1:max_iter
     % Plot all nodes as markers
     scatter(swarm(:, 1), swarm(:, 2), [], node_colors, 'filled');
 
-    % The position of the destination
-    dest_x = 40;
-    dest_y = 40;
-
     %--- Formation Scene + Node Trace---
     for i = 1:swarm_size
         % Plot the node trace
@@ -153,7 +153,6 @@ for k=1:max_iter
         x_high = swarm(k, 1) + markersize(1)/2;
         y_low = swarm(k, 2) - markersize(2)/2;
         y_high = swarm(k, 2) + markersize(2)/2;
-
         imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(k, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
     end
 
@@ -232,16 +231,21 @@ for k=1:max_iter
             speed(i,1)=speed(i,1)+rho_ij* travel_speed * nd(1);
             speed(i,2)=speed(i,2)+rho_ij* travel_speed * nd(2);
 
-            %---Senario 1: Reach to Goal---
+            %---Scenario 1: Reach to Goal---
             if i == closest_node_index || true
                 destination_vector = [dest_x - swarm(i, 1), dest_y - swarm(i, 2)];
-                nd = destination_vector / norm(destination_vector);
-            else
-                nd = (qi - qj) / sqrt(1 + norm(qi - qj) * formation_speed);
-            end
+                dist_vector = norm(destination_vector);
+                destination_speed = destination_vector / norm(destination_vector);
 
-            speed(i, 1) = speed(i, 1) + rho_ij * nd(1);
-            speed(i, 2) = speed(i, 2) + rho_ij * nd(2);
+                if dist_vector > bm
+                    contr_param = am;
+                else
+                    contr_param = am * (dist_vector/bm);
+                end
+
+                speed(i, 1) = speed(i, 1) + (destination_speed(1) * contr_param);
+                speed(i, 2) = speed(i, 2) + (destination_speed(2) * contr_param);
+            end
         end
         swarm(i,1)=swarm(i,1)+speed(i,1)*h;
         swarm(i,2)=swarm(i,2)+speed(i,2)*h;
@@ -267,6 +271,9 @@ for k=1:max_iter
 
     end
 
+    if norm([dest_x - swarm(i, 1), dest_y - swarm(i, 2)]) < 0.5
+        break;
+    end
     pause(0)
 
 end

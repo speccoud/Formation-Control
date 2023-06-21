@@ -1,4 +1,24 @@
-function isCrossing = lineCrossesSquare(lineStart, lineEnd, squareCenter, sideLength)
+function isCrossing = isCrossing(lineStart, lineEnd, obstacle)
+    % Extract the coordinates of the line and obstacle
+    x1 = lineStart(1);
+    y1 = lineStart(2);
+    x2 = lineEnd(1);
+    y2 = lineEnd(2);
+
+    % Check the type of obstacle and handle accordingly
+    switch obstacle.type
+        case 'square'
+            isCrossing = isCrossingSquare(x1, y1, x2, y2, obstacle.center, obstacle.sideLength);
+        case 'circle'
+            isCrossing = isCrossingCircle(x1, y1, x2, y2, obstacle.center, obstacle.radius);
+        case 'rectangle'
+            isCrossing = isCrossingRectangle(x1, y1, x2, y2, obstacle.center, obstacle.width, obstacle.height);
+        otherwise
+            error('Unsupported obstacle type');
+    end
+end
+
+function isCrossing = isCrossingSquare(x1, y1, x2, y2, squareCenter, sideLength)
     % Extract the coordinates of the line and square
     x1 = lineStart(1);
     y1 = lineStart(2);
@@ -68,3 +88,57 @@ function isOnSegment = isPointOnSegment(x1, y1, x2, y2, x3, y3)
         isOnSegment = false;
     end
 end
+
+
+function isCrossing = isCrossingCircle(x1, y1, x2, y2, circleCenter, radius)
+    % Calculate the direction vector of the line segment
+    dx = x2 - x1;
+    dy = y2 - y1;
+    
+    % Calculate the vector between the line start and circle center
+    cx = circleCenter(1);
+    cy = circleCenter(2);
+    v = [cx - x1, cy - y1];
+    
+    % Calculate the quadratic coefficients
+    a = dx^2 + dy^2;
+    b = 2 * (dx * v(1) + dy * v(2));
+    c = v(1)^2 + v(2)^2 - radius^2;
+    
+    % Check if the line segment intersects the circle
+    discriminant = b^2 - 4 * a * c;
+    if discriminant < 0
+        isCrossing = false;
+    else
+        t1 = (-b + sqrt(discriminant)) / (2 * a);
+        t2 = (-b - sqrt(discriminant)) / (2 * a);
+        isCrossing = (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+    end
+end
+
+
+function isCrossing = isCrossingRectangle(x1, y1, x2, y2, rectCenter, width, height)
+    % Calculate the half width and half height
+    halfWidth = width / 2;
+    halfHeight = height / 2;
+    
+    % Calculate the coordinates of the rectangle's corners
+    x = rectCenter(1);
+    y = rectCenter(2);
+    corners = [x - halfWidth, y - halfHeight;   % Top-left corner
+               x + halfWidth, y - halfHeight;   % Top-right corner
+               x + halfWidth, y + halfHeight;   % Bottom-right corner
+               x - halfWidth, y + halfHeight];  % Bottom-left corner
+    
+    % Check if any of the line segments intersect with the rectangle
+    isCrossing = false;
+    for i = 1:4
+        j = mod(i, 4) + 1;
+        if doLineSegmentsIntersect(x1, y1, x2, y2, corners(i, 1), corners(i, 2), corners(j, 1), corners(j, 2))
+            isCrossing = true;
+            break;
+        end
+    end
+end
+
+% ... existing code for doLineSegmentsIntersect, orientation, and isPointOnSegment
