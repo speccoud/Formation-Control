@@ -15,28 +15,28 @@ r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
 formation_speed = 1;
-travel_speed = 0.5; % was 0.5
+travel_speed = 0.55; % was 0.5
 communication_qualities = zeros(swarm_size, swarm_size);
-am         = 0.2; % was 0.2
+am         = 0.25; % was 0.2
 bm         = 1;
-a0         = 0.6; % was 0.6
-b0         = 20; % was 20
+a0         = 0.7; % was 0.6
+b0         = 30; % was 20
 bf         = 5;
 af         = 1; % was 1
 
 
 % The position of the destination
-dest_x = 35;
+dest_x = 45;
 dest_y = 130;
 
 % The position of the obstacle
 obs_x = 10;
 obs_y = 50;
-obs_side_length = 25;
+obs_side_length = 35;
 
 obs2_x = 60;
 obs2_y = 50;
-obs2_side_length = 25;
+obs2_side_length = 35;
 
 avoid_directions = zeros(swarm_size);
 
