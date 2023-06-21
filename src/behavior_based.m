@@ -1,4 +1,4 @@
-%% -- Main ---
+%% -- Main Call ---
 close all;
 clear all;
 clc;
