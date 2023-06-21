@@ -15,18 +15,18 @@ r0          = 5;                       % reference antenna near-field
 PT          = 0.94;                    % reception probability threshold
 rho_ij      = 0;
 formation_speed = 1;
-travel_speed = 3;
+travel_speed = 0.5; % was 0.5
 communication_qualities = zeros(swarm_size, swarm_size);
-am         = 1; % was 0.3
+am         = 0.2; % was 0.2
 bm         = 1;
-a0         = 1; % was 0.7
-b0         = 10; % was 7
-bf         = 3;
-af         = 1;
+a0         = 0.6; % was 0.6
+b0         = 20; % was 20
+bf         = 5;
+af         = 1; % was 1
 
 
 % The position of the destination
-dest_x = 100;
+dest_x = 130;
 dest_y = 100;
 
 % The position of the obstacle
@@ -292,16 +292,8 @@ for k=1:max_iter
            
             
             
-
-            
-          
-
-           
-
-        end
-
-         % fprintf("Time: %d\n", trigger);
-        if k >= 0
+            % fprintf("Time: %d\n", trigger);
+        if k >= 25
             %---Senario 1: Reach to Goal---
             
             destination_vector = [dest_x - swarm(i, 1), dest_y - swarm(i, 2)];
@@ -385,6 +377,14 @@ for k=1:max_iter
             end
             
         end
+            
+          
+
+           
+
+        end
+
+         
 
 
         if all(communication_qualities(i, :) < PT)
