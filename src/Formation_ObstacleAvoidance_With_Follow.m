@@ -30,7 +30,7 @@ wall_follow_threshold = 10;
 
 
 % The position of the destination
-dest_x = 130;
+dest_x = 30;
 dest_y = 100;
 dest = [dest_x, dest_y];
 x_t = dest(1);
@@ -43,17 +43,13 @@ obs_side_length = 1;
 
 avoid_directions = zeros(swarm_size);
 
-swarm_obs = [50 + 10*cos(0), 50 + 10*sin(0);
-              50 + 10*cos(pi/3), 50 + 10*sin(pi/3);
-              50 + 10*cos((2*pi)/3), 50 + 10*sin((2*pi)/3);
-              50 + 10*cos(pi), 50 + 10*sin(pi);
-              50 + 10*cos((4*pi)/3), 50 + 10*sin((4*pi)/3);
-              50 + 10*cos((5*pi)/3), 50 + 10*sin((5*pi)/3);
-              50 + 10*cos((pi)/2), 50 + 10*sin((pi)/2);
-              50 + 10*cos((3*pi)/2), 50 + 10*sin((3*pi)/2);
-              50 + 10*cos((pi)/4), 50 + 10*sin((pi)/4);
-              50 + 10*cos((11*pi)/6), 50 + 10*sin((11*pi)/6);
-              50 + 10*cos((pi)/6), 50 + 10*sin((pi)/6);];
+swarm_obs = [10, 50;
+            15, 50;
+            20, 50;
+            25, 50;
+            30, 50;
+            35, 50;
+            40, 50;];
 
 %% ---Initialize Agents' Positions---
 swarm = [
@@ -123,7 +119,7 @@ tic
 
 figure(4)
 hold on
-rectangle('Position', [obs_x - 10, obs_y - 10, 10 * 2, 10 * 2], 'EdgeColor', 'none', 'FaceColor', [1 0 0 0.4], 'Curvature', 1);
+% rectangle('Position', [obs_x - 10, obs_y - 10, 10 * 2, 10 * 2], 'EdgeColor', 'none', 'FaceColor', [1 0 0 0.4], 'Curvature', 1);
 % text(obs_x, obs_y+11, 'Obstacle', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
 % Plot the destination
 plot([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'k', 'LineWidth', 2);
@@ -162,6 +158,9 @@ for k=1:max_iter
 
     % Plot all nodes as markers
     scatter(swarm(:, 1), swarm(:, 2), 16, node_colors, 'filled');
+    if size(swarm_obs, 1)
+        plot(swarm_obs(:, 1), swarm_obs(:, 2), 'r*');
+    end
 
     %--- Formation Scene + Node Trace---
     for i = 1:swarm_size
@@ -203,8 +202,8 @@ for k=1:max_iter
     % fill(obs_x + [-obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2 -obs_side_length/2], obs_y + [-obs_side_length/2 -obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2], 'r', 'FaceAlpha', 0.3);
     % rectangle('Position', [obs_x - 10, obs_y - 10, 10 * 2, 10 * 2], 'FaceColor', [1 0 0 0.3], 'Curvature', 1);
     % text(obs_x, obs_y+11, 'Obstacle', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
-    rectangle('Position', [obs_x - 10, obs_y - 10, 10 * 2, 10 * 2], 'EdgeColor', 'none', 'FaceColor', [1 0 0 0.4], 'Curvature', 1);
-    
+    % rectangle('Position', [obs_x - 10, obs_y - 10, 10 * 2, 10 * 2], 'EdgeColor', 'none', 'FaceColor', [1 0 0 0.4], 'Curvature', 1);
+  
 
     hold on;
 
@@ -213,9 +212,9 @@ for k=1:max_iter
     % fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'k');
     % text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
     hold on;
-    % if size(swarm_obs, 1)
-    %     plot(swarm_obs(:, 1), swarm_obs(:, 2), 'ro');
-    % end
+    if size(swarm_obs, 1)
+        plot(swarm_obs(:, 1), swarm_obs(:, 2), 'r*');
+    end
     
     for l = 1:swarm_size
         x_low = swarm(l, 1) - markersize(1)/2;
@@ -256,7 +255,7 @@ for k=1:max_iter
                 label = communication_qualities(i, j);
                 label_str = sprintf('%.4f', label);
 
-                text(label_x, label_y, label_str, 'HorizontalAlignment', 'center', 'Color', label_color);
+                % text(label_x, label_y, label_str, 'HorizontalAlignment', 'center', 'Color', label_color);
                 hold off;
 
                 % Remove quality value for refresh
