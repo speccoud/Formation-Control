@@ -353,8 +353,6 @@ for k=1:max_iter
             
         end
 
-         
-
 
         if all(communication_qualities(i, :) < PT)
             % fprintf("Agent %d:HIT JAM ZONE\n", i);

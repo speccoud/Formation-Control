@@ -17,12 +17,14 @@ rho_ij      = 0;
 formation_speed = 1;
 travel_speed = 1;
 communication_qualities = zeros(swarm_size, swarm_size);
-am          = 0.3;
+am          = 0.1;
 bm          = 1;
 
 % The position of the destination
-dest_x = 40;
-dest_y = 50;
+dest_x = 35;
+dest_y = 60;
+
+
 %% ---Initialize Agents' Positions---
 swarm = [
     -5,  14;
@@ -140,8 +142,8 @@ for k=1:max_iter
     set(gcf, 'Position', figure_positions(3, :));
     [img, map, alphachannel] = imread('drone','png');
     markersize = [3, 3];
-    fill(dest_x + [-2 2 2 -2 -2], dest_y + [-2 -2 2 2 -2], 'r');
-    text(dest_x + 5, dest_y, 'Destination', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
+    fill(dest_x + [-2 2 2 -2 -2], dest_y + [-2 -2 2 2 -2], 'w');
+    text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
@@ -247,11 +249,13 @@ for k=1:max_iter
                 speed(i, 2) = speed(i, 2) + (destination_speed(2) * contr_param);
             end
         end
+
         swarm(i,1)=swarm(i,1)+speed(i,1)*h;
         swarm(i,2)=swarm(i,2)+speed(i,2)*h;
+        
         speed(i,1)=0;
         speed(i,2)=0;
-
+        
         t_Elapsed=cat(1, t_Elapsed, toc);
 
         %---Average Communication Performance Indicator---%
@@ -268,7 +272,6 @@ for k=1:max_iter
         set(rn_Text, 'Position', [t_Elapsed(end), rn(end)], 'String', sprintf('rn: %.4f', rn(end)));
 
         pause(0);
-
     end
 
     if norm([dest_x - swarm(i, 1), dest_y - swarm(i, 2)]) < 0.5

@@ -1,250 +1,423 @@
-%% --- Main ---
-close all;
+%% Communication-aware Formation Control
 clear all;
+close all;
 clc;
 
-% Robot position
-robot_pos = [
+% Initialize all parameters
+max_iter    = 500;
+h           = 1;
+swarm_size  = 7;
+alpha       = 10^(-5);                 % system parameter about antenna characteristics
+delta       = 2;                       % required application data rate
+beta        = alpha*(2^delta-1);
+v           = 3;                       % path loss exponent
+r0          = 5;                       % reference antenna near-field
+PT          = 0.94;                    % reception probability threshold
+rho_ij      = 0;
+formation_speed = 1;
+movement_speed = 0.5;
+communication_qualities = zeros(swarm_size, swarm_size);
+
+a_m = 0.2; % Amplitude of the move-to-goal force; affects the strength of the attraction towards the goal
+b_m = 1;   % Distance at which the move-to-goal force starts to diminish; beyond this distance, the force remains constant
+
+a_0 = 0.6; % Amplitude of the avoid-obstacle force; affects the strength of the repulsion from the obstacles
+b_0 = 10;  % Distance at which the avoid-obstacle force starts to diminish; beyond this distance, the force is zero
+b_f = 2;   % Distance at which the avoid-obstacle force reaches its maximum value; below this distance, the force is zero
+
+a_f = 1;   % Amplitude of the follow-wall force; affects the strength of the attraction towards the wall when wall-following behavior is active
+
+
+% The position of the destination
+dest_x = 150;
+dest_y = 120;
+
+% The position of the obstacles (x_o, y_o, radius)
+obstacles = [
+    60, 30, 10;
+    90, 60, 10;
+    120, 90, 10;
+    ];
+
+avoid_directions = zeros(swarm_size);
+
+swarm_obs = [];
+
+
+%% ---Initialize Agents' Positions---
+swarm = [
     7, 0;
     7, -20;
-    0, -10;
-    35, -20;
-    58, 0;
-    52, 13;
-    52, -18
+    0,   -10;
+    35,  -20;
+    58,   0;
+    52,  13;
+    52, -18;
+    ];
+x_i = swarm(:, 1);
+y_i = swarm(:, 2);
+
+%% ---Initialize the velocity---
+for j = 1:swarm_size
+    speed(j,1) = 0;
+    speed(j,2) = 0;
+    prev_speed(j,1) = 0;
+    prev_speed(j,2) = 0;
+end
+
+
+%% ---Performance Indicators---
+t_Elapsed = 0;
+Jn        = 0;
+rn        = 0;
+
+% Define the figure positions
+figure_positions = [
+    %Left Bottom Right Width Height
+
+    750, 480, 500, 400;    % Position for Figure 2
+    200, 10, 500, 400;    % Position for Figure 3
+
+    200, 480, 500, 400;   % Position for Figure 1
+    750, 10, 500, 400;    % Position for Figure 4
+
+
     ];
 
-% The position of the goal
-goal_x = 190;
-goal_y = 140;
-goal_pos = [goal_x, goal_y];
+% Plot Jn
+figure(1)
+Jn_Plot = plot(t_Elapsed, Jn);
+set(gcf, 'Position', figure_positions(1, :));
+xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+ylabel('$J_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+title('Average Communication Performance Indicator');
+hold on
+Jn_Text = text(t_Elapsed(end), Jn(end), sprintf('Jn: %.4f', Jn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
 
-% The position of square obstacle
-sq_x = 70;
-sq_y = 40;
-sq_side_length = 20;
+% Plot rn
+figure(2)
+rn_Plot = plot(t_Elapsed, rn);
+set(gcf, 'Position', figure_positions(2, :));
+xlabel('$t(s)$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+ylabel('$r_n$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+title('Average Distance Indicator');
+hold on
+rn_Text = text(t_Elapsed(end), rn(end), sprintf('rn: %.4f', rn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
 
-% The position of circle obstacle
-circle_x = 110;
-circle_y = 70;
-circle_center = [circle_x, circle_y];
-circle_radius = 10;
+drawnow                                         % Force a graphics refresh so that isn't counted in our elapsed time
 
-% The position of rectangle obstacle
-rec_x = 150;
-rec_y = 100;
-rec_width = 10;
-rec_height = 30;
+tic
 
-% Obstacles
-obstacles = [
-    struct('type', 'square', 'center', [sq_x, sq_y], 'sideLength', sq_side_length, 'radius', NaN, 'width', NaN, 'height', NaN),
-    struct('type', 'circle', 'center', [circle_x, circle_y], 'radius', circle_radius, 'sideLength', NaN, 'width', NaN, 'height', NaN),
-    struct('type', 'rectangle', 'center', [rec_x, rec_y], 'width', rec_width, 'height', rec_height, 'radius', NaN, 'sideLength', NaN)
-    ];
+% Assign a different color to each edge-label pair
+line_colors = rand(swarm_size, swarm_size, 3);
+label_colors = line_colors;
 
-% Simulation parameters
-num_robots = size(robot_pos, 1);
-num_iterations = 1000;
-dt = 10;
+% Define the color matrix with predefined colors
+node_colors = [
+    108 155 207;  % Light Blue
+    247 147 39;   % Orange
+    242 102 171;  % Light Pink
+    255 217 90;   % Light Gold
+    122 168 116;  % Green
+    147 132 209;  % Purple
+    245 80 80     % Red
+    ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
 
-% Weight factors and constants
-a_m = 1; % Movement behavior parameter
-b_m = 1; % Movement behavior parameter
-a_0 = 1; % Obstacle avoidance behavior parameter
-b_0 = 10; % Obstacle avoidance behavior parameter
-b_f = 3; % Wall-following behavior parameter
-a_f = 1; % Wall-following behavior parameter
+[img, map, alphachannel] = imread('drone','png');
+markersize = [3, 3];
 
-k_goal = 1;
-max_velocity = 10;
-k_obstacle = 1;
-max_range = 10;
-k_wall = 1;
-follow_wall_distance = 5;
 
-% Preallocate arrays for storing robot positions
-robot_positions = zeros(num_iterations, num_robots, 2);
-robot_positions(1, :, :) = robot_pos;
+%% ---Simulation---
+for k=1:max_iter
 
-% Animation setup
-figure;
+    % Plot the node trace inside the loop
+    figure(4)
+    set(gcf, 'Position', figure_positions(4, :));
+    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    title('Node Trace');
+    hold on;
+
+    % Plot all nodes as markers
+    scatter(swarm(:, 1), swarm(:, 2), [], node_colors, 'filled');
+
+    %--- Formation Scene + Node Trace---
+    for i = 1:swarm_size
+        % Plot the node trace
+        swarm_trace(k, i, :) = swarm(i, :);
+
+        trace_x = squeeze(swarm_trace(:, i, 1));
+        trace_y = squeeze(swarm_trace(:, i, 2));
+        plot(trace_x, trace_y, 'Color', node_colors(i, :));
+
+        % Add arrows to indicate node movement
+        arrow_x = trace_x(1:end-1);
+        arrow_y = trace_y(1:end-1);
+        arrow_dx = diff(trace_x);
+        arrow_dy = diff(trace_y);
+
+        % Normalize the arrow displacements
+        arrow_magnitudes = sqrt(arrow_dx.^2 + arrow_dy.^2);
+        max_arrow_magnitude = max(arrow_magnitudes);
+        scaling_factor = 2;  % Adjust the scaling factor for arrow size
+        normalized_arrow_dx = arrow_dx * scaling_factor / max_arrow_magnitude;
+        normalized_arrow_dy = arrow_dy * scaling_factor / max_arrow_magnitude;
+
+        quiver(arrow_x, arrow_y, normalized_arrow_dx, normalized_arrow_dy, 0, 'Color', node_colors(i, :), 'LineWidth', 1.5, 'MaxHeadSize', 2);
+    end
+
+    figure(3);
+    clf; % Clear the figure
+    set(gcf, 'Position', figure_positions(3, :));
+    xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
+    title('Formation Scene');
+    axis equal;
+    % Plot the obstacle
+    for obs = obstacles'
+        rectangle('Position', [obs(1) - obs(3), obs(2) - obs(3), obs(3) * 2, obs(3) * 2], 'FaceColor', 'r', 'Curvature', 1);
+    end
+    hold on;
+
+    % Plot the destination
+    fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'w');
+    text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
+    hold on;
+    if size(swarm_obs, 1)
+        plot(swarm_obs(:, 1), swarm_obs(:, 2), 'ro');
+    end
+
+    for l = 1:swarm_size
+        x_low = swarm(l, 1) - markersize(1)/2;
+        x_high = swarm(l, 1) + markersize(1)/2;
+        y_low = swarm(l, 2) - markersize(2)/2;
+        y_high = swarm(l, 2) + markersize(2)/2;
+        imagesc([x_low x_high], [y_low y_high], img, 'AlphaData', alphachannel, 'CData', repmat(reshape(node_colors(l, :), [1 1 3]), [size(img, 1), size(img, 2), 1]));
+    end
+
+
+    %--- Formation Scene Edge+Label ---
+    for i = 1:swarm_size
+        for j= 1:swarm_size
+            if i ~= j && communication_qualities(i, j) > PT
+
+                hold on;
+
+                % Get the line color and label color for the current pair
+                line_color = line_colors(i, j, :);
+                label_color = label_colors(i, j, :);
+
+                % line_color = node_colors(i, :);
+                % label_color = line_color;
+
+                a1 = swarm(i,:);
+                a2 = swarm(j,:);
+                plot([a1(1), a2(1)], [a1(2), a2(2)], '--', 'Color', line_color);
+
+                % Calculate the position for the label
+                scaling_factor = 0.2;  % Adjust the scaling factor for the label positioning
+                midpoint_x = (a1(1) + a2(1)) / 2;
+                midpoint_y = (a1(2) + a2(2)) / 2;
+                displacement_x = (a2(1) - a1(1)) * scaling_factor;
+                displacement_y = (a2(2) - a1(2)) * scaling_factor;
+                label_x = midpoint_x + displacement_x;
+                label_y = midpoint_y + displacement_y + 2;
+
+                % Add the number label at the midpoint of the line
+                label = communication_qualities(i, j);
+                label_str = sprintf('%.4f', label);
+
+                hold off;
+
+                % Remove quality value for refresh
+                communication_qualities(i, j) = 0;
+                communication_qualities(j, i) = 0;
+            end
+        end
+    end
+
+    hold off;
+
+    axis equal;
+
+    % Calculate the distances between each node and the destination
+    distances = vecnorm(swarm - repmat([dest_x, dest_y], swarm_size, 1), 2, 2);
+
+    % Find the index of the node with the minimum distance
+    [~, closest_node_index] = min(distances);
+
+    %--- Controller ---
+    for i=1:swarm_size
+        rho_ij=0;
+        phi_rij=0;
+        rij=0;
+        for j=[1:(i-1),(i+1):swarm_size]
+            rij=sqrt((swarm(i,1)-swarm(j,1))^2+(swarm(i,2)-swarm(j,2))^2);
+            aij=exp(-alpha*(2^delta-1)*(rij/r0)^v);
+            gij=rij/sqrt(rij^2+r0^2);
+
+            if aij>=PT
+                rho_ij=(-beta*v*rij^(v+2)-beta*v*(r0^2)*(rij^v)+r0^(v+2))*exp(-beta*(rij/r0)^v)/sqrt((rij^2+r0^2)^3);
+            else
+                rho_ij=0;
+            end
+
+            phi_rij=gij*aij;
+            communication_qualities(i,j) = phi_rij;
+            qi=[swarm(i,1),swarm(i,2)];
+            qj=[swarm(j,1),swarm(j,2)];
+            nd=(qi-qj)/sqrt(1+norm(qi-qj)*formation_speed);
+
+            speed(i,1)=speed(i,1)+rho_ij * nd(1);
+            speed(i,2)=speed(i,2)+rho_ij * nd(2);
+
+
+            if k >= 25
+                % Calculate move_to_goal vector for each robot
+                V_move_to_goal = move_to_goal_vector(x_i(i), y_i(i), dest_x, dest_y);
+
+                % Calculate nearest obstacle and distance
+                [x_o, y_o, d_0] = nearest_obstacle(x_i(i), y_i(i), obstacles);
+
+                % Calculate avoid_obstacle vector for each robot
+                V_avoid_obstacle = avoid_obstacle_vector(x_i(i), y_i(i), x_o, y_o);
+                fprintf('start: %d\n', V_avoid_obstacle)
+
+                % Calculate follow_wall vector
+                V_follow_wall = follow_wall_vector(x_i(i), y_i(i), x_o, y_o, dest_x, dest_y);
+
+                % Calculate control parameters
+                f1 = control_parameter_f1(d_0, a_m, b_m);
+                f2 = control_parameter_f2(d_0, a_0, b_0, b_f);
+                f3 = control_parameter_f3(d_0, b_0, a_f);
+
+                % Calculate direction vector
+                V_direction = f1 * V_move_to_goal + f2 * V_avoid_obstacle + f3 * V_follow_wall;
+
+                % Normalize and update position
+                % V_direction = movement_speed * (V_direction / norm(V_direction));
+
+                swarm(i,1)=swarm(i,1) + V_direction(:, 1);
+                swarm(i,2)=swarm(i,2) + V_direction(:, 2);
+            end
+        end
+
+        if all(communication_qualities(i, :) < PT)
+            if ~ismember(swarm(i, :), swarm_obs)
+                swarm_obs = [swarm_obs; swarm(i, :)];
+                fprintf("Obstacle found, new size: %d\n", size(swarm_obs, 1));
+            end
+            swarm(i,1)=swarm(i,1)-prev_speed(i,1) * 1.5;
+            swarm(i,2)=swarm(i,2)-prev_speed(i,2) * 1.5;
+        else
+            swarm(i,1)=swarm(i,1)+speed(i,1)*h;
+            swarm(i,2)=swarm(i,2)+speed(i,2)*h;
+        end
+
+        prev_speed(i,1) = speed(i,1)*h;
+        prev_speed(i,2) = speed(i,2)*h;
+
+        speed(i,1)=0;
+        speed(i,2)=0;
+
+        t_Elapsed=cat(1, t_Elapsed, toc);
+
+        %---Average Communication Performance Indicator---%
+        Jn=cat(1, Jn, phi_rij);
+        Jn=smooth(Jn);
+        set(Jn_Plot, 'xdata', t_Elapsed, 'ydata', Jn);      % Plot Jn
+        set(Jn_Text, 'Position', [t_Elapsed(end), Jn(end)], 'String', sprintf('Jn: %.4f', Jn(end)));
+        pause(0);
+
+        %---Average Neighboring Distance Indicator---%
+        rn=cat(1, rn, rij);
+        rn=smooth(rn);
+        set(rn_Plot, 'xdata', t_Elapsed, 'ydata', rn);      % Plot rn
+        set(rn_Text, 'Position', [t_Elapsed(end), rn(end)], 'String', sprintf('rn: %.4f', rn(end)));
+
+        pause(0);
+
+    end
+
+    pause(0)
+
+end
+
+figure(1)
+axis([0 max_iter+10  min(Jn) max(Jn)+5]);  % Update the limits for Figure 1
+
+figure(2)
+axis([0 max_iter+10 min(rn) max(rn)+5]);  % Update the limits for Figure 2
+
+% Plot the final node trace outside the loop
+figure(4)
 hold on;
-axis equal;
-
-% Plot goal position
-plot(goal_pos(1), goal_pos(2), 'ko', 'MarkerSize', 10, 'LineWidth', 2);
-
-% Plot obstacles
-for i = 1:numel(obstacles)
-    obstacle = obstacles(i);
-    if strcmp(obstacle.type, 'square')
-        x = obstacle.center(1) - obstacle.sideLength/2;
-        y = obstacle.center(2) - obstacle.sideLength/2;
-        w = obstacle.sideLength;
-        h = obstacle.sideLength;
-        rectangle('Position', [x, y, w, h], 'FaceColor', 'r');
-    elseif strcmp(obstacle.type, 'circle')
-        x = obstacle.center(1) - obstacle.radius;
-        y = obstacle.center(2) - obstacle.radius;
-        d0 = 2 * obstacle.radius;
-        rectangle('Position', [x, y, d0, d0], 'Curvature', [1, 1], 'FaceColor', 'r');
-    elseif strcmp(obstacle.type, 'rectangle')
-        x = obstacle.center(1) - obstacle.width/2;
-        y = obstacle.center(2) - obstacle.height/2;
-        w = obstacle.width;
-        h = obstacle.height;
-        rectangle('Position', [x, y, w, h], 'FaceColor', 'r');
-    end
+for i = 1:swarm_size
+    trace_x = squeeze(swarm_trace(:, i, 1));
+    trace_y = squeeze(swarm_trace(:, i, 2));
+    plot(trace_x, trace_y);
 end
-
-% Plot initial robot positions
-for i = 1:num_robots
-    x = robot_positions(1, i, 1);
-    y = robot_positions(1, i, 2);
-    plot(x, y, 'b.', 'MarkerSize', 10);
-end
-
-% Animation loop
-for iter = 2:num_iterations
-    for i = 1:num_robots
-        % Calculate the combined force for each robot
-        F_total = combinedForce(robot_positions(iter-1, i, :), goal_pos, obstacles, a_m, b_m, a_0, b_0, b_f, a_f);
-
-        % Update the robot's position based on the combined force
-        robot_positions(iter, i, :) = updatePosition(robot_positions(iter-1, i, :), F_total, max_velocity, dt * i); % <-- Multiply dt by i
-
-        % Plot updated robot positions
-        x = robot_positions(iter, i, 1);
-        y = robot_positions(iter, i, 2);
-        plot(x, y, 'b.', 'MarkerSize', 10);
-    end
-
-    drawnow; % Update the figure
-    pause(1); % Pause for a short duration to create animation effect
-end
-
-
+axis([x_min x_max y_min y_max]);
 hold off;
 
 
-%% --- Function Definition ---
-
-function F_total = combinedForce(robot_pos, goal_pos, obstacles, a_m, b_m, a_0, b_0, b_f, a_f)
-    % Calculate forces
-    F_goal = moveTowardsGoal(robot_pos, goal_pos, a_m, b_m);
-    F_avoid_obstacle = avoidObstacles(robot_pos, obstacles, a_0, b_0, goal_pos); 
-    F_follow_wall = followWall(robot_pos, goal_pos, a_f, b_f);
-
-    % Sum all forces
-    F_total = F_goal + F_avoid_obstacle + F_follow_wall;
+%% Functions 
+function V = move_to_goal_vector(x_i, y_i, x_t, y_t)
+V = [x_t - x_i; y_t - y_i] ./ norm([x_t - x_i; y_t - y_i]);
 end
 
 
+function [x_o, y_o, d_0] = nearest_obstacle(x_i, y_i, obstacles)
+% Calculate distances from each obstacle to robot
+robot_position = [x_i, y_i];
+distances = arrayfun(@(x, y, r) sqrt((x - robot_position(1))^2 + (y - robot_position(2))^2) - r, obstacles(:, 1), obstacles(:, 2), obstacles(:, 3));
 
-function F_move_to_goal = moveTowardsGoal(robot_pos, goal_pos, a_m, b_m)
-% Reshape the arrays if needed
-robot_pos = reshape(robot_pos, 1, []);
-goal_pos = reshape(goal_pos, 1, []);
+% Find the nearest obstacle and its distance
+[d_0, idx] = min(distances);
+x_o = obstacles(idx, 1);
+y_o = obstacles(idx, 2);
+end
 
-% Calculate distance between robot and goal
-d_m = sqrt(sum((goal_pos - robot_pos).^2));
 
-% Calculate behavior parameter
-if d_m >= b_m
+function V = avoid_obstacle_vector(x_i, y_i, x_o, y_o, V_move_to_goal)
+robot_to_obstacle = [x_o - x_i; y_o - y_i];
+sign_pm = sign(dot(V_move_to_goal, robot_to_obstacle, 1));
+V = (1 / norm(robot_to_obstacle)) * [sign_pm * (y_o - y_i); -sign_pm * (x_o - x_i)];
+end
+
+
+function V = follow_wall_vector(x_i, y_i, x_o, y_o)
+sign_pm = 1; % Change this based on the relationship between the robot's moving direction and the obstacles
+V = (1 / sqrt((x_o - x_i).^2 + (y_o - y_i).^2)) * [sign_pm * (y_o - y_i); -sign_pm * (x_o - x_i)];
+end
+
+
+function f1 = control_parameter_f1(d_m, a_m, b_m)
+if d_m > b_m
     f1 = a_m;
 else
     f1 = a_m * (d_m / b_m);
 end
-
-% Calculate behavior vector
-V_move_to_goal = (goal_pos - robot_pos) / norm(goal_pos - robot_pos);
-
-% Calculate force
-F_move_to_goal = f1 * V_move_to_goal;
 end
 
 
-function F_avoid_obstacle = avoidObstacles(robot_pos, obstacles, a_0, b_0, goal_pos)
-    % Initialize behavior vector
-    V_avoid_obstacle = [0, 0];
-
-    % Reshape the arrays if needed
-    robot_pos = reshape(robot_pos, 1, []);
-    goal_pos = reshape(goal_pos, 1, []);
-
-    for i = 1:numel(obstacles)
-        obstacle = obstacles(i);
-
-        % Calculate distance between robot and obstacle manually
-        dx = obstacle.center(1) - robot_pos(1);
-        dy = obstacle.center(2) - robot_pos(2);
-        d_0 = sqrt(dx^2 + dy^2);
-
-        % Check if obstacle is within range
-        if d_0 <= b_0
-            % Calculate behavior parameter
-            f2 = a_0 * ((d_0 / (b_0 - b_f)) + (b_0 / (b_0 - b_f)));
-
-            % Calculate behavior vector
-            V_avoid_obstacle = V_avoid_obstacle + f2 * [
-                -dy;
-                dx
-                ];
-        end
-    end
-
-    % Calculate force
-    F_avoid_obstacle = V_avoid_obstacle / norm(V_avoid_obstacle);
-
-    % Adjust the behavior vector based on the direction towards the goal
-    goal_vector = goal_pos - robot_pos;
-    goal_direction = goal_vector / norm(goal_vector);
-    F_avoid_obstacle = F_avoid_obstacle + goal_direction;
-    F_avoid_obstacle = F_avoid_obstacle / norm(F_avoid_obstacle);
+function f2 = control_parameter_f2(d_0, a_0, b_0, b_f)
+if d_0 > b_0 || d_0 < b_f
+    f2 = 0;
+else
+    f2 = a_0 * (d_0 / (b_f - b_0) + b_0 / (b_0 - b_f));
+end
 end
 
 
-function F_follow_wall = followWall(robot_pos, obstacles, b_f, a_f)
-    % Initialize behavior vector
-    V_follow_wall = [0, 0];
+function f3 = control_parameter_f3(d_0, b_0, a_f)
+% Implement wall-following conditions here
+wall_following_on = (d_0 <= b_0); % Change this based on the conditions for wall-following behavior
 
-    for i = 1:length(obstacles)
-        obstacle = obstacles(i);
-        % Calculate distance between robot and obstacle manually
-        dx = obstacle.center(1) - robot_pos(1);
-        dy = obstacle.center(2) - robot_pos(2);
-        d_0 = sqrt(dx^2 + dy^2);
-
-        % Check if obstacle is within range
-        if d_0 <= b_f
-            % Calculate behavior parameter
-            f3 = a_f * ((b_f / (b_f - a_f)) - (d_0 / (b_f - a_f)));
-
-            % Calculate behavior vector
-            V_follow_wall = V_follow_wall + f3 * [
-                -(obstacle.center(2) - robot_pos(2));
-                obstacle.center(1) - robot_pos(1)
-                ];
-        end
-    end
-
-    % Calculate force
-    F_follow_wall = V_follow_wall / norm(V_follow_wall);
+if wall_following_on
+    f3 = a_f;
+else
+    f3 = 0;
 end
-
-
-
-function new_pos = updatePosition(old_pos, force, max_velocity, dt)
-    % Reshape the arrays if needed
-    old_pos = reshape(old_pos, 1, []);
-    force = reshape(force, 1, []);
-
-    % Calculate velocity
-    velocity = force * max_velocity;
-
-    % Calculate new position
-    new_pos = old_pos + velocity * dt;
 end
-
 
