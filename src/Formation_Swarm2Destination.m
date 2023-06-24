@@ -91,8 +91,8 @@ node_colors = [
     108 155 207;  % Light Blue
     247 147 39;   % Orange
     242 102 171;  % Light Pink
-    255 217 90;   % Light Gold
     122 168 116;  % Green
+    255 217 90;   % Light Gold
     147 132 209;  % Purple
     245 80 80     % Red
     ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
@@ -142,7 +142,7 @@ for k=1:max_iter
     set(gcf, 'Position', figure_positions(3, :));
     [img, map, alphachannel] = imread('drone','png');
     markersize = [3, 3];
-    fill(dest_x + [-2 2 2 -2 -2], dest_y + [-2 -2 2 2 -2], 'w');
+    fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'w', 'LineWidth', 2);
     text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
     xlabel('$x$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)

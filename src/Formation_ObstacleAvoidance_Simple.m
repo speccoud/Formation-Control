@@ -98,6 +98,15 @@ title('Average Distance Indicator');
 hold on
 rn_Text = text(t_Elapsed(end), rn(end), sprintf('rn: %.4f', rn(end)), 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
 
+figure(4)
+hold on
+%Jam zone
+fill(obs_x + [-obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2 -obs_side_length/2], obs_y + [-obs_side_length/2 -obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2], 'r', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+%Destination
+fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'w', 'LineWidth', 2);
+hold off
+axis equal
+
 drawnow                                         % Force a graphics refresh so that isn't counted in our elapsed time
 
 tic
@@ -111,8 +120,8 @@ node_colors = [
     108 155 207;  % Light Blue
     247 147 39;   % Orange
     242 102 171;  % Light Pink
-    255 217 90;   % Light Gold
     122 168 116;  % Green
+    255 217 90;   % Light Gold
     147 132 209;  % Purple
     245 80 80     % Red
     ] / 255;  % Divide by 255 to scale the RGB values to the [0, 1] range
@@ -157,7 +166,13 @@ for k=1:max_iter
         normalized_arrow_dy = arrow_dy * scaling_factor / max_arrow_magnitude;
 
         quiver(arrow_x, arrow_y, normalized_arrow_dx, normalized_arrow_dy, 0, 'Color', node_colors(i, :), 'LineWidth', 1.5, 'MaxHeadSize', 2);
+       
+        if size(swarm_obs, 1)
+            plot(swarm_obs(:, 1), swarm_obs(:, 2), 'r*');
+        end
     end
+
+    fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'w', 'LineWidth', 2);
 
     figure(3);
     clf; % Clear the figure
@@ -166,18 +181,20 @@ for k=1:max_iter
     ylabel('$y$', 'Interpreter','latex', 'FontSize', 12, 'Rotation', 0)
     title('Formation Scene');
     axis equal;
+    hold on
+
     % Plot the obstacle
-    fill(obs_x + [-obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2 -obs_side_length/2], obs_y + [-obs_side_length/2 -obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2], 'r', 'FaceAlpha', 0.3);
-    text(obs_x + 10, obs_y, 'Obstacle', 'Color', 'r', 'FontSize', 12, 'HorizontalAlignment', 'left');
+    fill(obs_x + [-obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2 -obs_side_length/2], obs_y + [-obs_side_length/2 -obs_side_length/2 obs_side_length/2 obs_side_length/2 -obs_side_length/2], 'r', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
     hold on;
 
     % Plot the destination
-    fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'k');
-    text(dest_x + 5, dest_y, 'Destination', 'Color', 'k', 'FontSize', 12, 'HorizontalAlignment', 'left');
-    hold on;
+    fill([dest_x - 2, dest_x + 2, dest_x + 2, dest_x - 2, dest_x - 2], [dest_y - 2, dest_y - 2, dest_y + 2, dest_y + 2, dest_y - 2], 'w', 'LineWidth', 2);
     if size(swarm_obs, 1)
-        plot(swarm_obs(:, 1), swarm_obs(:, 2), 'ro');
+        plot(swarm_obs(:, 1), swarm_obs(:, 2), 'r*');
     end
+
+
+    
     
     for l = 1:swarm_size
         x_low = swarm(l, 1) - markersize(1)/2;
@@ -218,7 +235,7 @@ for k=1:max_iter
                 label = communication_qualities(i, j);
                 label_str = sprintf('%.4f', label);
 
-                text(label_x, label_y, label_str, 'HorizontalAlignment', 'center', 'Color', label_color);
+               % text(label_x, label_y, label_str, 'HorizontalAlignment', 'center', 'Color', label_color);
                 hold off;
 
                 % Remove quality value for refresh
@@ -378,8 +395,10 @@ for k=1:max_iter
 
         t_Elapsed=cat(1, t_Elapsed, toc);
 
+        fprintf("Timer: %d\n", t_Elapsed)
+
         %---Average Communication Performance Indicator---%
-        Jn=cat(1, Jn, phi_rij);
+            Jn=cat(1, Jn, phi_rij);
         Jn=smooth(Jn);
         set(Jn_Plot, 'xdata', t_Elapsed, 'ydata', Jn);      % Plot Jn
         set(Jn_Text, 'Position', [t_Elapsed(end), Jn(end)], 'String', sprintf('Jn: %.4f', Jn(end)));
