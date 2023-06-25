@@ -398,7 +398,7 @@ for k=1:max_iter
         fprintf("Timer: %d\n", t_Elapsed)
 
         %---Average Communication Performance Indicator---%
-            Jn=cat(1, Jn, phi_rij);
+        Jn=cat(1, Jn, phi_rij);
         Jn=smooth(Jn);
         set(Jn_Plot, 'xdata', t_Elapsed, 'ydata', Jn);      % Plot Jn
         set(Jn_Text, 'Position', [t_Elapsed(end), Jn(end)], 'String', sprintf('Jn: %.4f', Jn(end)));
@@ -419,10 +419,10 @@ for k=1:max_iter
 end
 
 figure(1)
-axis([0 max_iter+10  min(Jn) max(Jn)+5]);  % Update the limits for Figure 1
+axis([0 300  0, 1]);  % Update the limits for Figure 1
 
 figure(2)
-axis([0 max_iter+10 min(rn) max(rn)+5]);  % Update the limits for Figure 2
+axis([0 300 min(rn) max(rn)+5]);  % Update the limits for Figure 2
 
 % Plot the final node trace outside the loop
 figure(4)
@@ -432,6 +432,4 @@ for i = 1:swarm_size
     trace_y = squeeze(swarm_trace(:, i, 2));
     plot(trace_x, trace_y);
 end
-hold off;
-axis([x_min x_max y_min y_max]);
 hold off;
