@@ -21,7 +21,7 @@ am         = 0.2; % was 0.2
 bm         = 1;
 a0         = 0.6; % was 0.6
 b0         = 20; % was 20
-bf         = 5;
+bf         = 0;
 af         = 1; % was 1
 backstep_when_jammed = 1.2;
 
@@ -141,7 +141,7 @@ for k=1:max_iter
     hold on;
 
     % Plot all nodes as markers
-    scatter(swarm(:, 1), swarm(:, 2), [], node_colors, 'filled');
+    scatter(swarm(:, 1), swarm(:, 2), 16, node_colors, 'filled');
 
     %--- Formation Scene + Node Trace---
     for i = 1:swarm_size
