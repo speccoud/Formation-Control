@@ -162,7 +162,7 @@ for k=1:max_iter
     %--- Formation Scene Edge+Label ---
     for i = 1:swarm_size
         for j= 1:swarm_size
-            if i ~= j && communication_qualities(i, j) > 0
+            if i ~= j && communication_qualities(i, j) > PT
 
                 hold on;
 
@@ -188,10 +188,10 @@ for k=1:max_iter
                 label_y = midpoint_y + displacement_y + 2;
 
                 % Add the number label at the midpoint of the line
-                label = communication_qualities(i, j);
-                label_str = sprintf('%.4f', label);
-
-                text(label_x, label_y, label_str, 'HorizontalAlignment', 'center', 'Color', label_color);
+                % label = communication_qualities(i, j);
+                % label_str = sprintf('%.4f', label);
+                % 
+                % text(label_x, label_y, label_str, 'HorizontalAlignment', 'center', 'Color', label_color);
                 hold off;
 
                 % Remove quality value for refresh
