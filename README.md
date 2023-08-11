@@ -16,11 +16,11 @@ This paper presents a formation control strategy for a swarm of unmanned aerial 
   </tr>
   <tr>
     <td align="center">
-          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Preprint.pdf"><img src="/lib/README.assets/Preprint.png" width="500" /></a>
+          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Preprint.pdf"><img src="/lib/README.assets/Preprint.png"  /></a>
           <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Preprint.pdf"><img src="https://img.shields.io/badge/View%20More-282c34?style=for-the-badge&logoColor=white" width="100" /></a>
     </td>
     <td align="center">
-          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Presentation.pdf"><img src="/lib/README.assets/Presentation.png" width="500" /></a>
+          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Presentation.pdf"><img src="/lib/README.assets/Presentation.png"  /></a>
           <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Presentation.pdf"><img src="https://img.shields.io/badge/View%20More-282c34?style=for-the-badge&logoColor=white" width="100" /></a>
     </td>
   </tr>
@@ -36,16 +36,16 @@ This paper presents a formation control strategy for a swarm of unmanned aerial 
     <th>Halfway</th>
   </tr>
   <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_1.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_2.png" width="500" /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_1.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_2.png"  /></td>
   </tr>
   <tr>
     <th>Final</th>
     <th>Trajectory</th>
   </tr>
   <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_3.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_trace.png" width="500" /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_3.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Swarm2Dest_trace.png"  /></td>
   </tr>
 </table>
 
@@ -57,16 +57,16 @@ This paper presents a formation control strategy for a swarm of unmanned aerial 
     <th>Halfway</th>
   </tr>
   <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_1.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_2.png" width="500" /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_1.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_2.png"  /></td>
   </tr>
   <tr>
     <th>Final</th>
     <th>Trajectory</th>
   </tr>
   <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_3.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_trace.png" width="500" /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_3.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Avoid_No_Follow_trace.png"  /></td>
   </tr>
 </table>
 
@@ -78,16 +78,16 @@ This paper presents a formation control strategy for a swarm of unmanned aerial 
     <th>Halfway</th>
   </tr>
   <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_1.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_2.png" width="500" /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_1.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_2.png"  /></td>
   </tr>
   <tr>
     <th>Final</th>
     <th>Trajectory</th>
   </tr>
   <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_3.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_trace.png" width="500" /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_3.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Wall_Follow_trace.png"  /></td>
   </tr>
 </table>
 
@@ -95,36 +95,28 @@ This paper presents a formation control strategy for a swarm of unmanned aerial 
 
 <table>
   <tr>
-    <th>Initial</th>
-    <th>Halfway</th>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_1.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_2.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_3.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_4.png"  /></td>
+  </tr>
+  <tr align="center">
+    <td>t=0s</td>
+    <td>t=4s</td>
+    <td>t=5s</td>
+    <td>t=6s</td>
   </tr>
   <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_1.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_2.png" width="500" /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_5.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_6.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_7.png"  /></td>
+    <td><img src="/lib/README.assets/Simulation.fig/Simulation_trace.png"  /></td>
   </tr>
-  <tr>
-    <th>Final</th>
-    <th>Trajectory</th>
-  </tr>
-  <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_3.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_4.png" width="500" /></td>
-  </tr>
-  <tr>
-    <th>Initial</th>
-    <th>Halfway</th>
-  </tr>
-  <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_5.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_6.png" width="500" /></td>
-  </tr>
-  <tr>
-    <th>Final</th>
-    <th>Trajectory</th>
-  </tr>
-  <tr>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_7.png" width="500" /></td>
-    <td><img src="/lib/README.assets/Simulation.fig/Simulation_trace.png" width="500" /></td>
+  <tr align="center">
+    <td>t=24s</td>
+    <td>t=29s</td>
+    <td>t=300s</td>
+    <td>t=Trajectory</td>
   </tr>
 </table>
 
