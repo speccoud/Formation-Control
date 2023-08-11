@@ -1,4 +1,5 @@
-<h1 align="center">Flocking Algorithm and Formation Control</h1>
+<h1 align="center">Behavior-based Communication-aware Formation Control in Dynamic Multi-Agent Systems for
+Jamming Detection and Avoidance</h1>
 
 <h6 align="center"><small>MATLAB implementations of Formation Control Algorithm.</small></h6>
 
