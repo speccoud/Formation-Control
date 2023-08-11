@@ -9,25 +9,22 @@ This paper presents a formation control strategy for a swarm of unmanned aerial 
 
 <div align="center">
 
-<h2>Paper</h2>
-
-<div>
-      <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Preprint.pdf">
-        <img src="/lib/README.assets/Preprint.png" width="350"/>
-      </a>
-  
-  [![](https://img.shields.io/badge/View%20More-282c34?style=for-the-badge&logoColor=white)](https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Preprint.pdf)
-</div>
-
-<h2>Presentation</h2>
-
-<div>
-      <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Presentation.pdf">
-        <img src="/lib/README.assets/Presentation.png" width="350"/>
-      </a>
-  
-  [![](https://img.shields.io/badge/View%20More-282c34?style=for-the-badge&logoColor=white)](https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Presentation.pdf)
-</div>
+<table>
+  <tr>
+    <th>Paper</th>
+    <th>Presentation</th>
+  </tr>
+  <tr>
+    <td align="center">
+          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Preprint.pdf"><img src="/lib/README.assets/Preprint.png" width="500" /></a>
+          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Preprint.pdf"><img src="https://img.shields.io/badge/View%20More-282c34?style=for-the-badge&logoColor=white" width="100" /></a>
+    </td>
+    <td align="center">
+          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Presentation.pdf"><img src="/lib/README.assets/Presentation.png" width="500" /></a>
+          <a href="https://github.com/sjpeccoud/Formation-Control/tree/main/lib/Presentation.pdf"><img src="https://img.shields.io/badge/View%20More-282c34?style=for-the-badge&logoColor=white" width="100" /></a>
+    </td>
+  </tr>
+</table>
 
 <h2>Simulation</h2>
 
