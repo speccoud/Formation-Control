@@ -3,7 +3,7 @@ Jamming Detection and Avoidance</h1>
 
 <h6 align="center"><small>MATLAB implementations of Formation Control Algorithm.</small></h6>
 
-<p align="center"><b>#multi-agent system &emsp; #formation control  &emsp; #Communication-aware <br/> #behavior-based  &emsp; #jamming area  &emsp; #obstacle avoidance</b></p>
+<p align="center"><b>#multi-agent system &emsp; #formation control  &emsp; #communication-aware <br/> #behavior-based  &emsp; #jamming area  &emsp; #obstacle avoidance</b></p>
 
 This paper presents a formation control strategy for a swarm of unmanned aerial vehicles (UAVs) that navigate towards a destination while avoiding a jamming area. The proposed approach utilizes a gradient controller for formation control to maximize the communication quality within the swarm. A movement controller is used to go to a destination and avoid a jamming area without prior knowledge of its existence. A simulation is conducted to prove the effectiveness of this approach. The result highlights an efficient navigation strategy while maintaining sufficient communication quality for a multi-agent system.
 
